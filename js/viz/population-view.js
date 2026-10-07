@@ -220,7 +220,10 @@
         });
 
       // Filas de números
-      const rowsData = problem.aux.rows.map((r) => r).concat([{ id: 'copies', kind: 'int', values: copies }]);
+      // Un paso puede traer valores propios para una fila (la edad en estado estacionario cambia en cada paso)
+      const rowsData = problem.aux.rows
+        .map((r) => (step.rowValues && step.rowValues[r.id] ? Object.assign({}, r, { values: step.rowValues[r.id] }) : r))
+        .concat([{ id: 'copies', kind: 'int', values: copies }]);
       // En el reemplazo, las filas que no tienen valor para un individuo (la edad de los hijos) van vacías
       cols.select('.vals').each(function (i) {
         const vg = d3.select(this);

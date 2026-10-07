@@ -30,11 +30,14 @@
     const lab = P.labels(mu, lambda);
     const T = S.newTrace(all);
     const age = ages.slice();   // edad de quien ocupa cada hueco
+    // edad de cada individuo para la fila «Edad»: la actual si está en la población; si ha salido, la que tenía
+    const indAge = ages.concat(Array(lambda).fill(null));
+    const rowValues = () => ({ age: indAge.slice() });
 
     T.st.rows = ['age'];
-    T.snap({ type: 'intro', text: { key: 'intro', params: { mu, lambda } } });
+    T.snap({ type: 'intro', text: { key: 'intro', params: { mu, lambda } }, rowValues: rowValues() });
     T.st.pool = S.range(mu);
-    T.snap({ type: 'copy', text: { key: 'copy', params: { mu } } });
+    T.snap({ type: 'copy', text: { key: 'copy', params: { mu } }, rowValues: rowValues() });
     const gone = [];
     for (let k = 0; k < lambda; k++) {
       const child = mu + k;
@@ -59,13 +62,15 @@
         text: { key, params: { k: k + 1, child: lab[child], fc: all[child], victim: lab[victim], fv: all[victim], slot: v + 1, age: age[v] } },
         hl: [child, victim],
         newSlot: v,
+        rowValues: rowValues(),
       });
       for (let j = 0; j < mu; j++) age[j]++;
       age[v] = 0;
+      T.st.pool.forEach((ind, j) => { indAge[ind] = age[j]; });
     }
     const next = T.st.pool.slice();
     const dp = P.doneParams(all, mu, next, lab);
-    T.snap({ type: 'done', text: { key: dp.b1 < dp.b0 ? 'doneLost' : 'done', params: dp }, dim: gone });
+    T.snap({ type: 'done', text: { key: dp.b1 < dp.b0 ? 'doneLost' : 'done', params: dp }, dim: gone, rowValues: rowValues() });
 
     return {
       pool: next,

@@ -122,3 +122,25 @@ test('datos aleatorios de reemplazo reproducibles y válidos', () => {
   assert.equal(P.validateOffspring([1, -2]), 'errFitness');
   assert.equal(P.validateOffspring([1, 2]), null);
 });
+
+test('estado estacionario: la fila «Edad» da en cada paso la edad actual', () => {
+  const r = rng.mulberry32(15);
+  for (let t = 0; t < 500; t++) {
+    const mu = 4 + Math.floor(r() * 7);
+    const lambda = 1 + Math.floor(r() * 3);
+    const par = randPop(r, mu);
+    const off = randPop(r, lambda);
+    const ages = Array.from({ length: mu }, () => 1 + Math.floor(r() * 5));
+    const res = steadyState(par, { offspring: off, variant: 'oldest', ages });
+    assert.deepEqual(res.steps[0].rowValues.age, ages.concat(Array(lambda).fill(null)));
+    res.steps.filter((s) => s.type === 'replace').forEach((s) => {
+      const victim = s.hl[1];
+      assert.equal(s.rowValues.age[victim], s.text.params.age);
+      // es el más viejo de la población en ese momento
+      s.pool.filter((i) => i !== s.hl[0]).forEach((i) => assert.ok(s.rowValues.age[i] <= s.text.params.age));
+    });
+    const last = res.steps[res.steps.length - 1];
+    assert.equal(last.rowValues.age[mu + lambda - 1], 0);
+    res.pool.forEach((i) => assert.ok(last.rowValues.age[i] != null));
+  }
+});

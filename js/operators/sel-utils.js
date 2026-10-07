@@ -129,6 +129,7 @@
         pool: st.pool.slice(),
         sum: st.sum,
         bars: st.bars ? st.bars.slice() : null,
+        rowValues: null,
         newSlot: null,
         hl: [],
         dim: [],
