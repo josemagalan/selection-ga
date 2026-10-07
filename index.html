@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mecanismos de selección · Algoritmos genéticos</title>
+  <meta name="description" content="Herramienta docente interactiva: mecanismos de selección de los algoritmos genéticos paso a paso (ruleta, SUS, ranking, torneo y truncamiento). Interactive teaching tool: genetic algorithm selection mechanisms step by step.">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="topbar">
+      <a class="brand" href="#" id="brandLink">
+        <span class="brand-mark sel" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span data-i18n="brand">Selección en algoritmos genéticos</span>
+      </a>
+      <div class="lang" role="group" aria-label="Idioma / Language">
+        <button type="button" data-lang="es" aria-pressed="true">ES</button>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+    </header>
+
+    <main id="homeView" hidden>
+      <section class="hero">
+        <p class="eyebrow" data-i18n="homeEyebrow">Herramienta docente</p>
+        <h1 data-i18n="homeTitle">Mecanismos de selección en algoritmos genéticos</h1>
+        <p class="lead" data-i18n="homeLead"></p>
+      </section>
+      <div id="repGrid" class="rep-grid"></div>
+      <p class="home-extra home-sister">
+        <span data-i18n="sisterHomeLead">De la misma serie:</span>
+        <a href="https://josemagalan.github.io/crossover-ga/" id="sisterCrossover"><span data-i18n="sisterHomeCrossover">Cruces en algoritmos genéticos</span> <span aria-hidden="true">→</span></a>
+        <a href="https://josemagalan.github.io/mutation-ga/" id="sisterMutation"><span data-i18n="sisterHomeMutation">Mutación en algoritmos genéticos</span> <span aria-hidden="true">→</span></a>
+      </p>
+    </main>
+
+    <main id="opView" hidden>
+      <header class="op-head">
+        <a class="back" href="#" id="backLink"><span aria-hidden="true">←</span> <span data-i18n="allOperators">Todos los mecanismos</span></a>
+        <p class="eyebrow" id="opEyebrow"></p>
+        <h1 id="opTitle"></h1>
+        <p class="subtitle" id="opSubtitle"></p>
+        <nav class="op-switch" aria-labelledby="opSwitchLabel">
+          <span id="opSwitchLabel" class="op-switch-label" data-i18n="sameFamily">Mecanismos de esta familia</span>
+          <div id="opSwitch" class="op-switch-items"></div>
+        </nav>
+      </header>
+
+      <section class="card controls" aria-labelledby="controls-title">
+        <h2 id="controls-title" class="sr-only">Controles</h2>
+        <div class="control-row">
+          <div class="field">
+            <label for="len" data-i18n="size">Tamaño N</label>
+            <div class="range-wrap">
+              <input type="range" id="len" min="4" max="10" step="1" value="6">
+              <output id="lenOut" for="len">6</output>
+            </div>
+          </div>
+          <div class="field">
+            <label for="seed" data-i18n="seed">Semilla</label>
+            <input type="number" id="seed" min="0" max="999999" step="1" inputmode="numeric">
+          </div>
+          <div class="field" id="variantField" hidden>
+            <label for="variant" data-i18n="variant">Variante</label>
+            <select id="variant"></select>
+          </div>
+          <div id="paramsBox" class="params-box"></div>
+          <div class="buttons">
+            <button type="button" id="btnRandom" class="btn primary" data-i18n="randomPop">Población aleatoria</button>
+            <button type="button" id="btnGoldberg" class="btn" data-i18n="goldberg">Ejemplo de Goldberg (x²)</button>
+            <button type="button" id="btnDraw" class="btn" data-i18n="drawAgain" hidden>Sortear de nuevo</button>
+          </div>
+        </div>
+        <p id="variantDesc" class="hint variant-desc" hidden></p>
+        <p id="goldbergNote" class="hint variant-desc" data-i18n="goldbergNote" hidden></p>
+        <details id="manual">
+          <summary data-i18n="manualPop">Introducir las aptitudes a mano</summary>
+          <form id="manualForm" class="manual-form" novalidate>
+            <p class="hint" data-i18n="manualHint"></p>
+            <div class="manual-grid">
+              <label for="inP" data-i18n="population">Aptitudes</label>
+              <input type="text" id="inP" autocomplete="off" spellcheck="false" placeholder="12 30 5 21 9 17">
+            </div>
+            <div class="manual-actions">
+              <button type="submit" class="btn primary" data-i18n="apply">Aplicar</button>
+              <p id="err" class="error" role="alert"></p>
+            </div>
+          </form>
+        </details>
+      </section>
+
+      <section class="card stage">
+        <svg id="viz" role="img" aria-labelledby="vizLabel">
+          <title id="vizLabel"></title>
+        </svg>
+
+        <div class="player" id="playerBox">
+          <div class="player-buttons">
+            <button type="button" class="icon-btn" id="btnReset" data-i18n-title="reset" title="Inicio">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg>
+            </button>
+            <button type="button" class="icon-btn" id="btnPrev" data-i18n-title="prev" title="Anterior">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 5v14L6 12z"/></svg>
+            </button>
+            <button type="button" class="icon-btn play" id="btnPlay" data-i18n-title="play" title="Reproducir">
+              <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>
+              <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+            </button>
+            <button type="button" class="icon-btn" id="btnNext" data-i18n-title="next" title="Siguiente">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5v14l11-7z"/></svg>
+            </button>
+          </div>
+          <div class="progress">
+            <span id="stepCounter" class="counter">Paso 1 de 1</span>
+            <div class="bar"><div id="barFill" class="bar-fill"></div></div>
+          </div>
+          <div class="field speed">
+            <label for="speed" data-i18n="speed">Velocidad</label>
+            <input type="range" id="speed" min="0.5" max="2.5" step="0.25" value="1">
+            <output id="speedOut" for="speed">1×</output>
+          </div>
+        </div>
+
+        <div class="narration" id="narrationBox" aria-live="polite">
+          <p id="narration"></p>
+        </div>
+
+        <ul class="legend" id="legend"></ul>
+      </section>
+
+      <section class="card learn" aria-labelledby="learn-title">
+        <h2 id="learn-title" class="learn-title" data-i18n="learnTitle">Para saber más</h2>
+        <div class="tabs" role="tablist" aria-labelledby="learn-title">
+          <button type="button" role="tab" id="tab-explain" aria-controls="panel-explain" aria-selected="true" data-i18n="tabExplain">Explicación</button>
+          <button type="button" role="tab" id="tab-code" aria-controls="panel-code" aria-selected="false" tabindex="-1" data-i18n="tabCode">Pseudocódigo y código</button>
+          <button type="button" role="tab" id="tab-refs" aria-controls="panel-refs" aria-selected="false" tabindex="-1" data-i18n="tabRefs">Referencias</button>
+        </div>
+
+        <div role="tabpanel" id="panel-explain" aria-labelledby="tab-explain" class="panel" tabindex="0">
+          <div id="explainBody" class="prose"></div>
+        </div>
+
+        <div role="tabpanel" id="panel-code" aria-labelledby="tab-code" class="panel" hidden>
+          <div class="code-toolbar">
+            <div class="seg" role="group" data-i18n-aria="codeLang" aria-label="Lenguaje">
+              <button type="button" data-code="pseudo" aria-pressed="true" data-i18n="codePseudo">Pseudocódigo</button>
+              <button type="button" data-code="python" aria-pressed="false">Python</button>
+              <button type="button" data-code="javascript" aria-pressed="false">JavaScript</button>
+            </div>
+            <label id="syncWrap" class="sync">
+              <input type="checkbox" id="syncToggle" checked>
+              <span data-i18n="syncLabel">Resaltar el paso actual</span>
+            </label>
+            <div class="code-actions">
+              <span id="copyStatus" class="copy-status" role="status" aria-live="polite"></span>
+              <button type="button" id="btnCopy" class="btn" data-i18n="copyBtn">Copiar</button>
+              <button type="button" id="btnDownload" class="btn">Descargar</button>
+            </div>
+          </div>
+          <p id="codeHint" class="hint code-hint"></p>
+          <pre id="codeBlock" class="code" tabindex="0"></pre>
+        </div>
+
+        <div role="tabpanel" id="panel-refs" aria-labelledby="tab-refs" class="panel" hidden tabindex="0">
+          <p class="hint" data-i18n="refsIntro">Fuente original del mecanismo, referencias básicas del curso y lecturas recomendadas.</p>
+          <ol id="refList" class="refs"></ol>
+        </div>
+      </section>
+
+      <footer class="foot">
+        <p class="hint" data-i18n="keysHint">← → avanzar/retroceder · Espacio reproducir/pausa</p>
+      </footer>
+    </main>
+
+    <main id="aboutView" hidden>
+      <a class="back" href="#" id="aboutBack"><span aria-hidden="true">←</span> <span data-i18n="allOperators">Todos los mecanismos</span></a>
+      <article class="card about" id="aboutBody"></article>
+    </main>
+
+    <footer class="site-foot" id="siteFoot"></footer>
+  </div>
+
+  <script src="vendor/d3.min.js"></script>
+  <script src="js/rng.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/registry.js"></script>
+  <script src="js/operators/sel-utils.js"></script>
+  <script src="js/operators/roulette.js"></script>
+  <script src="js/operators/sus.js"></script>
+  <script src="js/operators/linear-ranking.js"></script>
+  <script src="js/operators/truncation.js"></script>
+  <script src="js/operators/tournament.js"></script>
+  <script src="js/viz/population-view.js"></script>
+  <script src="js/content/common.js"></script>
+  <script src="js/content/roulette.js"></script>
+  <script src="js/content/sus.js"></script>
+  <script src="js/content/linear-ranking.js"></script>
+  <script src="js/content/truncation.js"></script>
+  <script src="js/content/tournament.js"></script>
+  <script src="js/about.js"></script>
+  <script src="js/learn.js"></script>
+  <script src="js/home.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
