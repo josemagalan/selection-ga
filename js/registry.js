@@ -145,27 +145,43 @@
       operators: [
         {
           id: 'elitism',
-          ready: false,
+          ready: true,
           name: { es: 'Generacional con elitismo', en: 'Generational with elitism' },
           summary: { es: 'Los hijos sustituyen a los padres, salvo los e mejores, que sobreviven.', en: 'Offspring replace the parents, except the e best, who survive.' },
+          subtitle: {
+            es: 'Reemplazo generacional con elitismo: los hijos sustituyen a los padres, pero los e mejores padres sobreviven',
+            en: 'Generational replacement with elitism: offspring replace the parents, but the e best parents survive',
+          },
         },
         {
           id: 'steady-state',
-          ready: false,
+          ready: true,
           name: { es: 'Estado estacionario', en: 'Steady state' },
           summary: { es: 'Solo unos pocos hijos entran en cada paso, sustituyendo al peor, al más viejo o a uno al azar.', en: 'Only a few offspring enter at each step, replacing the worst, the oldest or a random one.' },
+          subtitle: {
+            es: 'Reemplazo en estado estacionario: cada hijo entra en la población sustituyendo al peor, al más viejo o a uno al azar',
+            en: 'Steady-state replacement: each child enters the population replacing the worst, the oldest or a random member',
+          },
         },
         {
           id: 'mu-plus-lambda',
-          ready: false,
+          ready: true,
           name: { es: 'Selección (μ + λ)', en: '(μ + λ) selection' },
           summary: { es: 'Sobreviven los μ mejores de padres e hijos juntos.', en: 'The μ best of parents and offspring together survive.' },
+          subtitle: {
+            es: 'Selección (μ + λ): padres e hijos compiten juntos y sobreviven los μ mejores',
+            en: '(μ + λ) selection: parents and offspring compete together and the μ best survive',
+          },
         },
         {
           id: 'mu-comma-lambda',
-          ready: false,
+          ready: true,
           name: { es: 'Selección (μ, λ)', en: '(μ, λ) selection' },
           summary: { es: 'Sobreviven los μ mejores hijos; los padres desaparecen.', en: 'The μ best offspring survive; the parents disappear.' },
+          subtitle: {
+            es: 'Selección (μ, λ): los padres desaparecen y sobreviven los μ mejores de los λ hijos',
+            en: '(μ, λ) selection: the parents disappear and the μ best of the λ offspring survive',
+          },
         },
       ],
     },

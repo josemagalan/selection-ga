@@ -376,7 +376,8 @@ test('muestreo rápido: elige los mismos padres que cada mecanismo animado con l
     tournament: [{ k: 2, p: 1 }, { k: 3, p: 0.7 }],
     truncation: [{ tau: 0.3 }, { tau: 0.8 }],
   };
-  const ready = registry.families.flatMap((f) => f.operators).filter((o) => o.ready).map((o) => o.id);
+  const ready = registry.families.flatMap((f) => f.operators).filter((o) => o.ready).map((o) => o.id)
+    .filter((id) => !require(`../js/operators/${id}.js`).spec.replacement);
   const r = rng.mulberry32(31);
   for (const id of ready) {
     assert.ok(CMP.SAMPLERS[id], `falta el muestreador de ${id}`);

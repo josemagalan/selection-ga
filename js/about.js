@@ -36,7 +36,7 @@
   const text = {
     es: {
       title: 'Acerca de esta herramienta',
-      lead: 'Herramienta docente interactiva para ver paso a paso los mecanismos de selección de los algoritmos genéticos, agrupados por familias (proporcionales a la aptitud, basados en el rango y por torneo), con su explicación, pseudocódigo, código descargable y referencias. ',
+      lead: 'Herramienta docente interactiva para ver paso a paso los mecanismos de selección de los algoritmos genéticos, agrupados por familias (proporcionales a la aptitud, basados en el rango y por torneo), y los de reemplazo o selección de supervivientes, con su explicación, pseudocódigo, código descargable y referencias. ',
       authorsTitle: 'Autores',
       group: 'Todos los autores forman parte del grupo de investigación Los Goonies (Group of Organization and Industrial Engineering and Simulation).',
       citeTitle: 'Cómo citar',
@@ -54,6 +54,7 @@
       thanksTitle: 'Agradecimientos',
       thanks: 'Agradecemos al programa Claude for Science de Anthropic su apoyo al desarrollo de esta herramienta, que se ha realizado con la ayuda de Claude.',
       foot: 'Acerca de',
+      footMoodle: 'Preguntas para Moodle',
       footSisters: 'Herramientas hermanas:',
       footCrossover: 'cruces',
       footMutation: 'mutación',
@@ -61,7 +62,7 @@
     },
     en: {
       title: 'About this tool',
-      lead: 'Interactive teaching tool to follow, step by step, the selection mechanisms of genetic algorithms, grouped by family (fitness-proportionate, rank-based and tournament), with explanations, pseudocode, downloadable code and references. ',
+      lead: 'Interactive teaching tool to follow, step by step, the selection mechanisms of genetic algorithms, grouped by family (fitness-proportionate, rank-based and tournament), and the replacement or survivor selection mechanisms, with explanations, pseudocode, downloadable code and references. ',
       authorsTitle: 'Authors',
       group: 'All authors are members of the Los Goonies research group (Group of Organization and Industrial Engineering and Simulation).',
       citeTitle: 'How to cite',
@@ -79,6 +80,7 @@
       thanksTitle: 'Acknowledgements',
       thanks: 'We thank Anthropic’s Claude for Science programme for supporting the development of this tool, which was built with the help of Claude.',
       foot: 'About',
+      footMoodle: 'Moodle questions',
       footSisters: 'Sister tools:',
       footCrossover: 'crossover',
       footMutation: 'mutation',
@@ -189,7 +191,9 @@
     cross.href = sisterUrl('crossover', lang);
     const mut = node('a', null, T.footMutation);
     mut.href = sisterUrl('mutation', lang);
-    links.append(about, document.createTextNode(` · ${T.footSisters} `), cross, document.createTextNode(', '), mut,
+    const moodle = node('a', null, T.footMoodle);
+    moodle.href = `#page=moodle&lang=${lang}`;
+    links.append(about, document.createTextNode(' · '), moodle, document.createTextNode(` · ${T.footSisters} `), cross, document.createTextNode(', '), mut,
       document.createTextNode(' · '), gh, document.createTextNode(` · ${T.footLicence}`));
     info.append(links);
     container.replaceChildren(logoRow('site-foot-logos'), info);

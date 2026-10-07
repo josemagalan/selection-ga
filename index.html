@@ -28,6 +28,7 @@
       </section>
       <div id="repGrid" class="rep-grid"></div>
       <p class="home-extra home-cmp"><a href="#cmp=all" id="cmpHomeLink"><span data-i18n="compareHomeLink">Comparar todos los mecanismos con la misma población y simular varias generaciones</span> <span aria-hidden="true">→</span></a></p>
+      <p class="home-extra"><a href="#page=moodle" id="moodleLink"><span data-i18n="moodleHomeLink">Para profesorado: bancos de preguntas para Moodle</span> <span aria-hidden="true">→</span></a></p>
       <p class="home-extra home-sister">
         <span data-i18n="sisterHomeLead">De la misma serie:</span>
         <a href="https://josemagalan.github.io/crossover-ga/" id="sisterCrossover"><span data-i18n="sisterHomeCrossover">Cruces en algoritmos genéticos</span> <span aria-hidden="true">→</span></a>
@@ -80,10 +81,12 @@
         <details id="manual">
           <summary data-i18n="manualPop">Introducir las aptitudes a mano</summary>
           <form id="manualForm" class="manual-form" novalidate>
-            <p class="hint" data-i18n="manualHint"></p>
+            <p class="hint" id="manualHint"></p>
             <div class="manual-grid">
-              <label for="inP" data-i18n="population">Aptitudes</label>
+              <label for="inP" id="inPLabel" data-i18n="population">Aptitudes</label>
               <input type="text" id="inP" autocomplete="off" spellcheck="false" placeholder="12 30 5 21 9 17">
+              <label for="inG" id="inGLabel" data-i18n="offspring" hidden>Hijos</label>
+              <input type="text" id="inG" autocomplete="off" spellcheck="false" placeholder="25 3 18 30 14 7" hidden>
             </div>
             <div class="manual-actions">
               <button type="submit" class="btn primary" data-i18n="apply">Aplicar</button>
@@ -258,6 +261,11 @@
       </section>
     </main>
 
+    <main id="moodleView" hidden>
+      <a class="back" href="#" id="moodleBack"><span aria-hidden="true">←</span> <span data-i18n="allOperators">Todos los mecanismos</span></a>
+      <article class="card about moodle" id="moodleBody"></article>
+    </main>
+
     <main id="aboutView" hidden>
       <a class="back" href="#" id="aboutBack"><span aria-hidden="true">←</span> <span data-i18n="allOperators">Todos los mecanismos</span></a>
       <article class="card about" id="aboutBody"></article>
@@ -280,6 +288,11 @@
   <script src="js/operators/exponential-ranking.js"></script>
   <script src="js/operators/truncation.js"></script>
   <script src="js/operators/tournament.js"></script>
+  <script src="js/operators/repl-utils.js"></script>
+  <script src="js/operators/elitism.js"></script>
+  <script src="js/operators/steady-state.js"></script>
+  <script src="js/operators/mu-plus-lambda.js"></script>
+  <script src="js/operators/mu-comma-lambda.js"></script>
   <script src="js/viz/population-view.js"></script>
   <script src="js/compare.js"></script>
   <script src="js/practice.js"></script>
@@ -293,8 +306,14 @@
   <script src="js/content/exponential-ranking.js"></script>
   <script src="js/content/truncation.js"></script>
   <script src="js/content/tournament.js"></script>
+  <script src="js/content/elitism.js"></script>
+  <script src="js/content/steady-state.js"></script>
+  <script src="js/content/mu-plus-lambda.js"></script>
+  <script src="js/content/mu-comma-lambda.js"></script>
   <script src="js/viz/compare-view.js"></script>
   <script src="js/about.js"></script>
+  <script src="js/moodle.js"></script>
+  <script src="js/moodle-page.js"></script>
   <script src="js/learn.js"></script>
   <script src="js/home.js"></script>
   <script src="js/app.js"></script>

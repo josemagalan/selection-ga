@@ -151,6 +151,44 @@
       details: { es: '(S. Forrest, ed., pp. 124–131). Morgan Kaufmann', en: '(S. Forrest, Ed., pp. 124–131). Morgan Kaufmann' },
       url: null,
     },
+    deJong: {
+      id: 'de-jong-1975',
+      type: 'book',
+      authors: 'De Jong, K. A.',
+      year: '1975',
+      title: 'An analysis of the behavior of a class of genetic adaptive systems',
+      details: { es: '(tesis doctoral). University of Michigan', en: '(Doctoral dissertation). University of Michigan' },
+      url: null,
+    },
+    syswerda1991: {
+      id: 'syswerda-1991',
+      type: 'inproceedings',
+      authors: 'Syswerda, G.',
+      year: '1991',
+      title: 'A study of reproduction in generational and steady-state genetic algorithms',
+      container: 'Foundations of Genetic Algorithms',
+      details: { es: '(G. J. E. Rawlins, ed., vol. 1, pp. 94–101). Morgan Kaufmann', en: '(G. J. E. Rawlins, Ed., Vol. 1, pp. 94–101). Morgan Kaufmann' },
+      url: 'https://doi.org/10.1016/B978-0-08-050684-5.50009-4',
+    },
+    schwefel: {
+      id: 'schwefel-1981',
+      type: 'book',
+      authors: 'Schwefel, H.-P.',
+      year: '1981',
+      title: 'Numerical optimization of computer models',
+      details: { es: 'Wiley', en: 'Wiley' },
+      url: null,
+    },
+    beyer: {
+      id: 'beyer-schwefel-2002',
+      type: 'article',
+      authors: 'Beyer, H.-G., & Schwefel, H.-P.',
+      year: '2002',
+      title: 'Evolution strategies – A comprehensive introduction',
+      container: 'Natural Computing',
+      details: { es: '1(1), 3–52', en: '1(1), 3–52' },
+      url: 'https://doi.org/10.1023/A:1015059928466',
+    },
     selectionMechanisms: {
       id: 'galan-selectionmechanisms',
       type: 'software',
@@ -195,7 +233,17 @@
     en: 'Result: the parents are {pool}. Mean fitness goes from {m0} in the population to {m1} among the parents; {distinct} of the {n} individuals have at least one copy (no copy: {lost}) and the best, {best}, has {bestCopies}.',
   };
 
-  const api = { refs, ref, makeHelpers, CORE, doneText };
+  /** Narración final de los mecanismos de reemplazo. */
+  const replDone = {
+    es: 'Siguiente generación: {next}. Sobreviven {parents} padres y {children} hijos; la aptitud media pasa de {m0} a {m1} y la mejor, de {b0} a {b1}.',
+    en: 'Next generation: {next}. {parents} parents and {children} offspring survive; mean fitness goes from {m0} to {m1} and the best, from {b0} to {b1}.',
+  };
+  const replLost = {
+    es: ' El mejor padre se ha perdido: este reemplazo no es elitista.',
+    en: ' The best parent has been lost: this replacement is not elitist.',
+  };
+
+  const api = { refs, ref, makeHelpers, CORE, doneText, replDone, replLost };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else (root.GAX = root.GAX || {}).contentCommon = api;
 })(typeof self !== 'undefined' ? self : this);

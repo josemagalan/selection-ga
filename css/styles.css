@@ -1123,3 +1123,14 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .sim-tip-val { font-variant-numeric: tabular-nums; font-weight: 600; }
 .sim-table td { font-variant-numeric: tabular-nums; }
 .pcol .fbar { fill: var(--p1); }
+
+/* Reemplazo: los hijos, en naranja (como el padre 2 en las herramientas hermanas) */
+.col.off .fbar { fill: var(--p2); }
+.col.off .chip-rect { stroke: var(--p2); }
+.col.off.hl .fbar { fill: var(--mut); }
+.col.off.hl .chip-rect { fill: var(--mut); stroke: var(--mut); }
+.pchip.off rect { fill: var(--p2); }
+.pchip.off .p-label { fill: var(--p2-ink); }
+.sw-off { background: var(--p2); }
+.pchip.off.new rect { fill: var(--mut); }
+.pchip.off.new .p-label { fill: var(--mut-ink); }

@@ -11,7 +11,8 @@ const CMP = require('../js/compare.js');
 const registry = require('../js/registry.js');
 const { placeCumulative } = require('../js/operators/tournament.js');
 
-const ready = registry.families.flatMap((f) => f.operators).filter((o) => o.ready).map((o) => o.id);
+const ready = registry.families.flatMap((f) => f.operators).filter((o) => o.ready).map((o) => o.id)
+  .filter((id) => !require(`../js/operators/${id}.js`).spec.replacement);
 
 test('los datos sorteados de la práctica determinan los padres', () => {
   const r = rng.mulberry32(41);

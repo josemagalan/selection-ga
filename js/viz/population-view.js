@@ -58,7 +58,7 @@
       const hasChrom = !!problem.chrom;
       const yRows = yChip + chipH + (hasChrom ? 52 : 12) + 16;
       const rowIds = aux.rows.map((r) => r.id).concat(['copies']);
-      const rowKeys = aux.rows.map((r) => r.labelKey || `row_${r.id}`).concat(['row_copies']);
+      const rowKeys = aux.rows.map((r) => r.labelKey || `row_${r.id}`).concat([aux.copiesLabelKey || 'row_copies']);
       const yRowsEnd = yRows + rowIds.length * ROW_H;
       const pieR = showPie ? 128 : 0;
       const pieCy = yBarTop + 10 + pieR;
@@ -117,7 +117,7 @@
       ];
       if (g.hasChrom) lab.push({ y: g.yChip + g.chipH + 22, key: 'rowChrom', cls: 'row-label small' });
       g.rowIds.forEach((id, k) => lab.push({ y: g.yRows + k * ROW_H + ROW_H / 2, key: g.rowKeys[k], cls: 'row-label small', row: id }));
-      lab.push({ y: g.yPool + g.chipH / 2, key: 'rowPool', cls: 'row-label' });
+      lab.push({ y: g.yPool + g.chipH / 2, key: problem.aux.poolLabelKey || 'rowPool', cls: 'row-label' });
       if (g.yArena != null) lab.push({ y: g.yArena + g.arenaH / 2, key: 'rowArena', cls: 'row-label', arena: true });
       if (g.yStrip != null) lab.push({ y: g.yStrip + g.stripH / 2, key: 'rowStrip', cls: 'row-label' });
       gLabels.selectAll('text.row-label').data(lab, (d) => d.key).join('text')
@@ -132,7 +132,7 @@
         .attr('x', g.left - 12).attr('y', g.yBarTop + g.barH / 2 + 34).attr('dy', '0.36em')
         .text(`Σ${aux.sumSymbol || 'f'} = ${fmt[aux.barsKind || 'fit'](sumValue)}`);
       // Números de los huecos de la población de padres
-      gPool.selectAll('g.slot').data(d3.range(g.n)).join((enter) => {
+      gPool.selectAll('g.slot').data(d3.range(problem.aux.poolSize || g.n)).join((enter) => {
         const e = enter.append('g').attr('class', 'slot');
         e.append('rect').attr('class', 'slot-rect');
         e.append('text').attr('class', 'slot-num');
@@ -189,6 +189,8 @@
       });
       const tr = (sel) => (animate ? sel.transition().duration(duration()) : sel);
       tr(cols).attr('transform', (i) => `translate(${colX(pos[i])},0)`);
+      const groups = problem.aux.groups || null;
+      cols.classed('off', (i) => !!groups && groups[i] === 'o');
       cols.classed('hl', (i) => hl.has(i))
         .classed('dim', (i) => dim.has(i))
         .classed('contestant', (i) => cont.has(i));
@@ -219,11 +221,12 @@
 
       // Filas de números
       const rowsData = problem.aux.rows.map((r) => r).concat([{ id: 'copies', kind: 'int', values: copies }]);
+      // En el reemplazo, las filas que no tienen valor para un individuo (la edad de los hijos) van vacías
       cols.select('.vals').each(function (i) {
         const vg = d3.select(this);
         const items = rowsData.map((r, k) => ({
           id: r.id, k, show: r.id === 'copies' ? showCopies : rowsShown.has(r.id),
-          text: r.id === 'copies' ? String(copies[i]) : fmt[r.kind](r.values[i]),
+          text: r.id === 'copies' ? String(copies[i]) : (r.values[i] == null ? '' : fmt[r.kind](r.values[i])),
           exp: r.id === 'copies' && problem.aux.expected ? problem.aux.expected[i] : null,
         }));
         vg.selectAll('text.val').data(items, (d) => d.id).join('text')
@@ -439,6 +442,8 @@
         e.append('text').attr('class', 'p-fit');
         return e;
       });
+      const groups = problem.aux.groups || null;
+      chips.classed('off', (d) => !!groups && groups[d.idx] === 'o');
       chips.classed('new', (d) => d.k === step.newSlot)
         .attr('transform', (d) => `translate(${slotX(d.k) - g.s / 2},${g.yPool})`);
       chips.select('rect').attr('width', g.s).attr('height', g.chipH).attr('rx', 6);

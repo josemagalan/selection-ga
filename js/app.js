@@ -11,7 +11,7 @@
 (function () {
   'use strict';
   const G = window.GAX;
-  const { rng: R, i18n, registry, selUtils: S, createPopulationView, createLearnPanel, createHome, createCompareView } = G;
+  const { rng: R, i18n, registry, selUtils: S, replUtils: P, createPopulationView, createLearnPanel, createHome, createCompareView } = G;
 
   const $ = (id) => document.getElementById(id);
   const el = {
@@ -22,12 +22,14 @@
     variantField: $('variantField'), variant: $('variant'), variantDesc: $('variantDesc'),
     btnRandom: $('btnRandom'), btnGoldberg: $('btnGoldberg'), btnDraw: $('btnDraw'), goldbergNote: $('goldbergNote'),
     manualForm: $('manualForm'), inP: $('inP'), err: $('err'),
+    inG: $('inG'), inGLabel: $('inGLabel'), manualHint: $('manualHint'),
     paramsBox: $('paramsBox'),
     btnReset: $('btnReset'), btnPrev: $('btnPrev'), btnPlay: $('btnPlay'), btnNext: $('btnNext'),
     counter: $('stepCounter'), barFill: $('barFill'),
     speed: $('speed'), speedOut: $('speedOut'),
     narration: $('narration'),
     aboutView: $('aboutView'), aboutBody: $('aboutBody'), siteFoot: $('siteFoot'),
+    moodleView: $('moodleView'), moodleBody: $('moodleBody'),
     playerBox: $('playerBox'), narrationBox: $('narrationBox'),
     btnPractice: $('btnPractice'), practiceCard: $('practiceCard'), practiceIntro: $('practiceIntro'),
     practiceGivens: $('practiceGivens'), practiceForm: $('practiceForm'), prM: $('prM'),
@@ -46,6 +48,7 @@
     draw: 1,             // semilla de los números aleatorios del mecanismo
     params: {},          // parámetros del mecanismo (s, k, p, τ…)
     n: 6, seed: 0, fitness: [], example: null,
+    offspring: null,     // reemplazo: aptitudes de los hijos (null: se sortean con la semilla)
     result: null, step: 0,
     playing: false, speed: 1, errKey: null,
     practice: false,     // modo «predice los padres»: paso fijo en la intro, sin reproductor
@@ -112,6 +115,7 @@
   }
 
   const impl = () => G.operators[state.opId];
+  const isRepl = () => !!(state.opId && G.operators[state.opId].spec.replacement);
   const spec = () => impl().spec;
   const meta = () => registry.getOperator(state.opId);
   const famId = () => meta().family;
@@ -131,21 +135,28 @@
 
   function generate(seed, n) {
     const r = R.mulberry32(seed);
-    Object.assign(state, { seed, n, fitness: S.randomFitness(r, n), example: null });
+    Object.assign(state, { seed, n, fitness: S.randomFitness(r, n), example: null, offspring: null });
   }
 
   function loadGoldberg() {
-    Object.assign(state, { n: S.GOLDBERG.fitness.length, fitness: S.GOLDBERG.fitness.slice(), example: 'goldberg' });
+    Object.assign(state, { n: S.GOLDBERG.fitness.length, fitness: S.GOLDBERG.fitness.slice(), example: 'goldberg', offspring: null });
   }
 
   function recompute(step) {
     stop();
     // Un mecanismo proporcional no admite una población cuyas aptitudes sumen 0: se sortea otra.
     if (impl().validatePopulation(state.fitness)) generate(state.seed, state.n);
-    state.result = spec().run(state.fitness, { variant: state.variant, seed: state.draw, params: state.params });
+    const opts = { variant: state.variant, seed: state.draw, params: state.params };
+    if (isRepl()) {
+      // Reemplazo: λ hijos (los dados o, si no cuadran con λ, sorteados con la semilla) y la edad de los padres
+      const lambda = spec().offspring(state.n, state.params);
+      if (!state.offspring || state.offspring.length !== lambda) state.offspring = P.randomOffspring(state.seed, lambda);
+      Object.assign(opts, { offspring: state.offspring, ages: P.randomAges(state.seed, state.n) });
+    }
+    state.result = spec().run(state.fitness, opts);
     view.setProblem({
-      fitness: state.fitness,
-      labels: S.LABELS.slice(0, state.n),
+      fitness: state.result.aux.fitnessAll || state.fitness,
+      labels: state.result.aux.labels || S.LABELS.slice(0, state.n),
       chrom: state.example === 'goldberg' ? S.GOLDBERG.chrom.map((c, i) => `${c}\nx = ${S.GOLDBERG.x[i]}`) : null,
       aux: state.result.aux,
     });
@@ -370,7 +381,7 @@
   });
 
   const readyOps = () => registry.families.flatMap((f) => f.operators)
-    .filter((op) => op.ready && G.operators[op.id] && G.content[op.id]).map((op) => op.id);
+    .filter((op) => op.ready && G.operators[op.id] && G.content[op.id] && !G.operators[op.id].spec.replacement).map((op) => op.id);
 
   // Ajustes de cada mecanismo en la comparación: los suyos por defecto, salvo el de la página de
   // la que se viene, que conserva los del usuario.
@@ -555,6 +566,10 @@
 
   const LEGEND = {
     individual: ['sw-ind', 'legendIndividual'],
+    parentInd: ['sw-ind', 'legendParentInd'],
+    childInd: ['sw-off', 'legendChildInd'],
+    survivor: ['sw-pool', 'legendSurvivor'],
+    cutSurv: ['sw-cut', 'legendCutSurv'],
     chosen: ['sw-chosen', 'legendChosen'],
     pointer: ['sw-pointer', 'legendPointer'],
     pool: ['sw-pool', 'legendPool'],
@@ -566,6 +581,7 @@
   function sameProblemHref(id) {
     const q = new URLSearchParams([['op', id], ['lang', state.lang], ['f', state.fitness.join('-')], ['s', String(state.seed)]]);
     if (state.example) q.set('ex', state.example);
+    if (isRepl() && G.operators[id].spec.replacement && state.offspring) q.set('g', state.offspring.join('-'));
     return `#${q.toString()}`;
   }
 
@@ -607,6 +623,10 @@
     }));
     renderVariants();
     renderParams();
+    // Práctica, copias y comparación son de la selección de padres; el reemplazo no las tiene
+    [el.btnPractice, el.btnCopies, el.btnCompare].forEach((b) => { b.hidden = isRepl(); });
+    el.inG.hidden = el.inGLabel.hidden = !isRepl();
+    el.manualHint.textContent = t(isRepl() ? 'manualHintRepl' : 'manualHint');
   }
 
   // Controles de los parámetros del mecanismo (s, k, p, τ).
@@ -644,7 +664,11 @@
   }
 
   // «Sortear de nuevo» solo si el mecanismo usa números aleatorios con estos ajustes
-  const usesDraw = () => !!spec().random && !(state.opId === 'truncation' && state.variant === 'cyclic');
+  const usesDraw = () => {
+    const sp = spec();
+    if (sp.randomVariants) return sp.randomVariants.indexOf(state.variant) !== -1;
+    return !!sp.random && !(state.opId === 'truncation' && state.variant === 'cyclic');
+  };
   function renderDrawButton() { el.btnDraw.hidden = !usesDraw(); }
 
   function renderVariants() {
@@ -682,6 +706,11 @@
     $('sisterCrossover').href = G.about.sisterUrl('crossover', state.lang);
     $('sisterMutation').href = G.about.sisterUrl('mutation', state.lang);
     $('cmpHomeLink').href = `#cmp=all&lang=${state.lang}`;
+    $('moodleLink').href = `#page=moodle&lang=${state.lang}`;
+    if (state.view === 'moodle') {
+      document.title = `${G.moodlePage.text[state.lang].title} · ${t('brand')}`;
+      G.moodlePage.renderMoodle(el.moodleBody, state.lang);
+    }
     if (state.view === 'about') {
       document.title = `${G.about.text[state.lang].title} · ${t('brand')}`;
       G.about.renderAbout(el.aboutBody, state.lang);
@@ -713,12 +742,21 @@
     el.opView.hidden = which !== 'op';
     el.aboutView.hidden = which !== 'about';
     el.cmpView.hidden = which !== 'cmp';
+    el.moodleView.hidden = which !== 'moodle';
   }
 
   function showHome() {
     stop();
     state.view = 'home';
     showOnly('home');
+  }
+
+  function showMoodle() {
+    stop();
+    const changed = state.view !== 'moodle';
+    state.view = 'moodle';
+    showOnly('moodle');
+    if (changed) window.scrollTo(0, 0);
   }
 
   function showAbout() {
@@ -770,6 +808,9 @@
       generate(s0, state.n);
     }
     if (state.params.k > state.n) state.params.k = state.n;
+    // Reemplazo: los hijos de la URL, si son válidos
+    const g = (q.get('g') || '').split('-').filter((x) => x !== '').map(Number);
+    state.offspring = isRepl() && g.length && !P.validateOffspring(g) ? g : null;
     renderOpHeader();
     recompute(parseInt(q.get('step'), 10) || 0);
     if (changed) window.scrollTo(0, 0);
@@ -782,6 +823,7 @@
     if (id && registry.isReady(id) && G.operators[id] && G.content[id]) showOp(id, q);
     else if (q.get('cmp')) showCompare(q);
     else if (q.get('page') === 'about') showAbout();
+    else if (q.get('page') === 'moodle') showMoodle();
     else showHome();
     applyLanguage();
   }
@@ -791,6 +833,7 @@
     const params = { lang: state.lang };
     let paramIds = [];
     if (state.view === 'about') params.page = 'about';
+    if (state.view === 'moodle') params.page = 'moodle';
     if (state.view === 'op') {
       Object.assign(params, {
         op: state.opId,
@@ -799,6 +842,7 @@
         f: state.example ? undefined : state.fitness.join('-'),
         s: String(state.seed),
         ex: state.example || undefined,
+        g: isRepl() && state.offspring ? state.offspring.join('-') : undefined,
         step: String(state.step),
         cp: state.copies ? '1' : undefined,
       });
@@ -820,7 +864,7 @@
       paramIds = Object.keys(c.params);
       paramIds.forEach((k) => { params[k] = String(c.params[k]); });
     }
-    const order = ['page', 'op', 'cmp', 'lang', 'from', 'v', 'r'].concat(paramIds, ['f', 's', 'ex', 'cp', 'sim', 'step']).filter((k) => params[k] != null && params[k] !== '');
+    const order = ['page', 'op', 'cmp', 'lang', 'from', 'v', 'r'].concat(paramIds, ['f', 'g', 's', 'ex', 'cp', 'sim', 'step']).filter((k) => params[k] != null && params[k] !== '');
     const h = new URLSearchParams(order.map((k) => [k, params[k]])).toString();
     if (location.hash.replace(/^#/, '') === h) return;
     try { history.replaceState(null, '', `#${h}`); } catch (err) { /* file:// en algunos navegadores */ }
@@ -833,6 +877,7 @@
     el.lenOut.textContent = state.n;
     el.seed.value = state.seed;
     el.inP.value = state.fitness.join(' ');
+    el.inG.value = state.offspring ? state.offspring.join(' ') : '';
     el.goldbergNote.hidden = state.example !== 'goldberg';
     el.btnGoldberg.setAttribute('aria-pressed', String(state.example === 'goldberg'));
   }
@@ -874,12 +919,27 @@
   el.manualForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const fitness = parseList(el.inP.value);
-    const err = impl().validatePopulation(fitness);
+    let err = impl().validatePopulation(fitness);
+    let offspring = null;
+    if (!err && isRepl()) {
+      offspring = parseList(el.inG.value);
+      // si el mecanismo tiene λ como parámetro, λ pasa a ser el número de hijos escritos
+      const lp = (spec().params || []).find((pr) => pr.id === 'lambda');
+      if (lp) {
+        err = P.validateOffspring(offspring);
+        if (!err && spec().id === 'mu-comma-lambda' && offspring.length < fitness.length) err = 'errLambdaMu';
+        if (!err && (offspring.length < lp.min || offspring.length > lp.max)) err = 'errLambdaRange';
+        if (!err) state.params = Object.assign({}, state.params, { lambda: offspring.length });
+      } else {
+        err = P.validateOffspring(offspring, spec().offspring(fitness.length, state.params));
+        if (err === 'errLambda') err = 'errLambdaEqual';
+      }
+    }
     state.errKey = err;
     el.err.textContent = err ? t(err) : '';
     el.inP.setAttribute('aria-invalid', String(!!err));
     if (err) return;
-    Object.assign(state, { n: fitness.length, fitness, example: null });
+    Object.assign(state, { n: fitness.length, fitness, example: null, offspring });
     afterSizeChange();
     recompute(0);
   });
@@ -925,7 +985,7 @@
   }));
 
   // Enlaces a la pantalla inicial conservando el idioma
-  [$('brandLink'), $('backLink'), $('aboutBack')].forEach((a) => a.addEventListener('click', (e) => {
+  [$('brandLink'), $('backLink'), $('aboutBack'), $('moodleBack')].forEach((a) => a.addEventListener('click', (e) => {
     e.preventDefault();
     location.hash = `lang=${state.lang}`;
   }));

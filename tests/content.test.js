@@ -62,6 +62,30 @@ const CALLS = {
     js: 'f(c.fitness, c.params.base, fixed(c.draws), c.v)',
     py: 'f(c["fitness"], c["params"]["base"], Fixed(c["draws"]), c["v"])',
   },
+  'mu-plus-lambda': {
+    repl: true,
+    params: (t) => ({ lambda: 1 + (t % 12) }),
+    js: 'f(c.fitness, c.offspring)',
+    py: 'f(c["fitness"], c["offspring"])',
+  },
+  'mu-comma-lambda': {
+    repl: true,
+    params: (t, n) => ({ lambda: Math.max(n, 4 + (t % 9)) }),
+    js: 'f(c.fitness, c.offspring)',
+    py: 'f(c["fitness"], c["offspring"])',
+  },
+  elitism: {
+    repl: true,
+    params: (t, n) => ({ elite: t % 4 }),
+    js: 'f(c.fitness, c.offspring, Math.min(c.params.elite, c.fitness.length - 1))',
+    py: 'f(c["fitness"], c["offspring"], min(c["params"]["elite"], len(c["fitness"]) - 1))',
+  },
+  'steady-state': {
+    repl: true,
+    params: (t) => ({ lambda: 1 + (t % 3) }),
+    js: 'f(c.fitness, c.offspring, c.ages, c.v, fixed(c.draws))',
+    py: 'f(c["fitness"], c["offspring"], c["ages"], c["v"], Fixed(c["draws"]))',
+  },
   truncation: {
     params: (t) => ({ tau: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1][t % 10] }),
     js: 'f(c.fitness, c.params.tau, fixed(c.draws), c.v === "cyclic")',
@@ -81,8 +105,14 @@ function makeCases(op, spec, count, seed, variant) {
       if (r() < 0.3) fitness[1] = fitness[0];
     } while (S.sum(fitness) === 0);
     const params = call.params ? call.params(t, n) : {};
-    const res = spec.run(fitness, { variant, seed: t + 1, params });
-    cases.push({ v: variant || null, fitness, params, draws: res.draws, expected: res.pool });
+    const extra = {};
+    if (call.repl) {
+      const lambda = spec.offspring(n, params);
+      extra.offspring = Array.from({ length: lambda }, () => rng.randInt(r, 0, 40));
+      extra.ages = Array.from({ length: n }, () => rng.randInt(r, 1, 6));
+    }
+    const res = spec.run(fitness, Object.assign({ variant, seed: t + 1, params }, extra));
+    cases.push(Object.assign({ v: variant || null, fitness, params, draws: res.draws, expected: res.pool }, extra));
   }
   return cases;
 }
@@ -98,7 +128,7 @@ for (const op of readyOps) {
       for (const lang of ['es', 'en']) {
         const ids = new Set(content.pseudocodeFor(lang, variant).map((l) => l.id));
         for (const c of makeCases(op, spec, 60, 3, variant)) {
-          const res = spec.run(c.fitness, { variant, params: c.params, draws: c.draws });
+          const res = spec.run(c.fitness, { variant, params: c.params, draws: c.draws, offspring: c.offspring, ages: c.ages });
           for (const step of res.steps) {
             const lines = content.stepLines[step.type];
             assert.ok(lines && lines.length, `${op.id}: paso «${step.type}» sin líneas`);

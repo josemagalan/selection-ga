@@ -19,7 +19,7 @@ All authors are members of the Los Goonies research group (Group of Organization
 
 ## Overview
 
-Selection decides which individuals of the population become the parents of the next generation. It has to favour the fittest without shutting the door on the rest: if it squeezes too hard, the population loses diversity and stagnates; if it squeezes too little, the search moves blindly. This interactive tool shows, step by step and in Spanish or English, how the classic selection mechanisms of genetic algorithms choose the parents from a population, and what each one does with the fittest and with the rest.
+Selection decides which individuals of the population become the parents of the next generation. It has to favour the fittest without shutting the door on the rest: if it squeezes too hard, the population loses diversity and stagnates; if it squeezes too little, the search moves blindly. This interactive tool shows, step by step and in Spanish or English, how the classic selection mechanisms of genetic algorithms choose the parents from a population, and what each one does with the fittest and with the rest. It also shows replacement (survivor selection), the second selection of an evolutionary algorithm: which parents and offspring make it into the next generation.
 
 It completes a series with [Crossover in genetic algorithms](https://github.com/josemagalan/crossover-ga) and [Mutation in genetic algorithms](https://github.com/josemagalan/mutation-ga), with the same approach and interface. Some of its ideas come from [SelectionMechanisms](https://github.com/josemagalan/SelectionMechanisms), a Shiny app by the same authors. It runs entirely in the browser, with no build step and no server: open `index.html` or use the [live demo](https://josemagalan.github.io/selection-ga/).
 
@@ -30,7 +30,7 @@ It completes a series with [Crossover in genetic algorithms](https://github.com/
 | Fitness-proportionate | Roulette wheel, stochastic universal sampling (SUS), roulette wheel with fitness scaling (linear scaling, cm; sigma truncation, c) and Boltzmann selection (temperature T; roulette or SUS sampling), plus a counterexample showing why the roulette wheel loses its pressure when a constant is added to fitness |
 | Rank-based | Linear ranking (selection pressure s), exponential ranking (base c), both with roulette or SUS sampling, and truncation selection (proportion τ; at random or in turns) |
 | Tournament | Tournament selection (size k, with or without replacement; stochastic with probability p) |
-| Replacement (survivors) | Generational with elitism, steady state, (μ + λ) and (μ, λ) — coming soon |
+| Replacement (survivors) | Generational replacement with elitism (elite size e), steady state (replace the worst, the oldest or a random member), (μ + λ) and (μ, λ) selection (number of offspring λ) |
 
 ## Features
 
@@ -38,17 +38,16 @@ It completes a series with [Crossover in genetic algorithms](https://github.com/
 - **Your own populations:** random populations with a reproducible seed, fitness values entered by hand, Goldberg’s classic f(x) = x² example, parameters as sliders and “draw again” for the random numbers; the current example is saved in the URL, ready to project in class or share.
 - **Learn more panel:** explanation of the mechanism, pseudocode that highlights the line of the current step, Python and JavaScript implementations to copy or download (tested to choose exactly the same parents as the tool with the same random numbers), and references, with the course’s core textbooks (Talbi, 2009; Bautista-Valhondo, 2020) always first after the original source.
 - **Exact ties:** the random numbers have two decimals and the limits of the stretches are shown with as many decimals as needed, so that every step can be checked by hand; cumulative values are rounded to nine decimals in the tool and in the downloadable code, so that 0.1 + 0.2 is 0.3 and ties are resolved as by hand.
-
+- **Replacement (survivor selection):** parents (A, B, C…) and offspring (a, b, c…) side by side, the cut of the μ best, the elite that survives, and the ages in steady state; the next generation fills slot by slot, with its mean and best fitness before and after. Offspring can be random or entered by hand. Copies, practice mode and comparison are for parent selection.
 - **Copies in 1000 repetitions:** for the current population and settings, how often each individual gets 0, 1, 2… copies, next to its expected copies, so that the noise of the roulette wheel and the minimum spread of SUS can be seen at a glance.
 - **Practice mode (“predict the parents”):** the random numbers (or the tournament contestants, or the places drawn among the best) are given exactly as the mechanism uses them; students compute probabilities, ranks and winners, write the parents and get them checked slot by slot.
 - **Compare mechanisms:** every mechanism applied to the same population, with the parents each one chooses and a table, averaged over 1000 repetitions, of the copies of the best, the selection intensity and the loss of diversity (Blickle and Thiele, 1996) and the sampling variability (Baker, 1987).
 - **Several generations of selection only:** following the SelectionMechanisms Shiny app, the pool of parents becomes the next population, with no crossover or mutation, for 40 generations of 50 individuals and 50 repetitions; line charts of distinct individuals and mean fitness, takeover time and how often the best is lost through genetic drift.
-
-Question banks for Moodle and the replacement (survivor selection) mechanisms are being developed.
+- **Question banks for Moodle:** for teachers, banks of calculation questions (probabilities of the roulette wheel and linear ranking; parents with the roulette wheel, SUS, linear ranking, tournament and truncation, given the random numbers) and multiple-choice questions (find the error), in three levels of difficulty, downloadable in Moodle XML. One category per mechanism, type and level, for random questions; the feedback links to the step-by-step solution of that very exercise, and the random numbers never fall within 0.005 of a limit, so that rounding by hand does not change the answer.
 
 ## Pedagogical purpose
 
-The tool is designed for undergraduate courses on metaheuristics, evolutionary computation and industrial engineering. It can be projected in lectures to walk through each mechanism, used by students on their own to check hand-worked exercises, or used in seminars to discuss selection pressure, the scaling problems of fitness-proportionate selection and why rank-based and tournament selection avoid them.
+The tool is designed for undergraduate courses on metaheuristics, evolutionary computation and industrial engineering. It can be projected in lectures to walk through each mechanism, used by students on their own to check hand-worked exercises, or used in seminars to discuss selection pressure, the scaling problems of fitness-proportionate selection, why rank-based and tournament selection avoid them, and the trade-off between elitism and diversity in replacement. The Moodle banks turn the same exercises into assessed questions.
 
 ## Running locally
 
@@ -64,7 +63,7 @@ Requires Node.js 22 or later; Python 3 is optional (it is used to test the downl
 npm test
 ```
 
-The tests check every mechanism (worked examples, thousands of random cases contrasted with an independent implementation in exact integer arithmetic, statistical properties such as the frequencies of the roulette wheel and the binary tournament, and SUS’s zero bias and minimum spread, the invariances of scaling and Boltzmann selection), that the fast samplers used for the comparison choose exactly the same parents as the animated mechanisms, that the practice mode gives enough data for a unique answer, that the downloadable code chooses the same parents as the tool with the same random numbers, and that the pseudocode and the narration cover every animation step. They run on every push with GitHub Actions.
+The tests check every mechanism (worked examples, thousands of random cases contrasted with an independent implementation in exact integer arithmetic, statistical properties such as the frequencies of the roulette wheel and the binary tournament, and SUS’s zero bias and minimum spread, the invariances of scaling and Boltzmann selection; for replacement, that (μ + λ) never loses the best, that (μ, λ) keeps only offspring and that elitism keeps the e best parents), that the Moodle questions have a unique answer with a margin against rounding and valid XML, that the fast samplers used for the comparison choose exactly the same parents as the animated mechanisms, that the practice mode gives enough data for a unique answer, that the downloadable code chooses the same parents as the tool with the same random numbers, and that the pseudocode and the narration cover every animation step. They run on every push with GitHub Actions.
 
 ## Project structure
 
@@ -72,9 +71,10 @@ The tests check every mechanism (worked examples, thousands of random cases cont
 | --- | --- |
 | `index.html`, `css/` | Page and styles |
 | `js/registry.js`, `js/home.js` | Catalogue of families and mechanisms; home screen |
-| `js/operators/` | Logic of each mechanism: a pure function returning the parents and the trace of steps |
+| `js/operators/` | Logic of each mechanism: a pure function returning the parents (or the survivors) and the trace of steps |
 | `js/viz/population-view.js` | D3 view that draws the trace: population, wheel, tournaments and parents |
 | `js/practice.js` | “Predict the parents”: the data that make the answer unique, and the grading |
+| `js/moodle.js`, `js/moodle-page.js` | Moodle question generator (Moodle XML) and its page |
 | `js/compare.js`, `js/viz/compare-view.js` | Fast samplers of every mechanism, copies in many repetitions, comparison metrics, many-generation simulation and its screen |
 | `js/content/` | Teaching content of each mechanism: explanation, narration, pseudocode, downloadable code and references |
 | `js/learn.js`, `js/about.js`, `js/app.js` | “Learn more” panel, about page and footer, page controller |
