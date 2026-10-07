@@ -12,6 +12,7 @@
  *   cut          truncamiento: cuántos de los mejores pueden ser padres (o null)
  *   pool         índices ya elegidos como padres; newSlot: hueco que se acaba de llenar
  *   hl, dim      individuos resaltados o atenuados
+ *   bars         alturas de las barras si no son la aptitud (aptitud escalada, desplazada…)
  *   text         { key, params } de la narración
  */
 (function (root) {
@@ -114,7 +115,7 @@
   function newTrace(fitness) {
     const n = fitness.length;
     const st = {
-      order: range(n), rows: [], wheel: false, pointers: [], contestants: [], cut: null, pool: [], sum: false,
+      order: range(n), rows: [], wheel: false, pointers: [], contestants: [], cut: null, pool: [], sum: false, bars: null,
     };
     const steps = [];
     function snap(step) {
@@ -127,6 +128,7 @@
         cut: st.cut,
         pool: st.pool.slice(),
         sum: st.sum,
+        bars: st.bars ? st.bars.slice() : null,
         newSlot: null,
         hl: [],
         dim: [],
@@ -135,6 +137,69 @@
     /** Marca como hechos los punteros activos (quedan en la ruleta, más tenues). */
     function settlePointers() { st.pointers.forEach((p) => { p.state = 'done'; }); }
     return { st, steps, snap, settlePointers };
+  }
+
+  /**
+   * N giros de la ruleta sobre las acumuladas accSorted (escala de probabilidad), en el orden de
+   * los individuos `order`. Cada giro es un paso «spin» de la traza. extra: parámetros añadidos.
+   */
+  function spinLoop(T, src, order, accSorted, extra) {
+    const n = order.length;
+    for (let k = 0; k < n; k++) {
+      const r = src.next(2);
+      const j = firstAbove(accSorted, r);
+      const i = order[j];
+      T.settlePointers();
+      T.st.pointers.push({ pos: r, value: r, hit: i, state: 'active' });
+      T.st.pool.push(i);
+      T.snap({
+        type: 'spin',
+        text: { key: 'spin', params: Object.assign({ k: k + 1, r, who: label(i), lo: j ? accSorted[j - 1] : 0, hi: accSorted[j], rank: j + 1 }, extra) },
+        hl: [i],
+        newSlot: k,
+      });
+    }
+    T.settlePointers();
+  }
+
+  /**
+   * SUS sobre las copias esperadas acumuladas accSorted (escala 0…N), en el orden `order`: un paso
+   * «pointers» con los N punteros y un paso «pick» por puntero.
+   */
+  function susLoop(T, src, order, accSorted, extra) {
+    const n = order.length;
+    const r = src.next(2);
+    for (let k = 0; k < n; k++) T.st.pointers.push({ pos: (r + k) / n, value: r + k, hit: null, state: 'pending' });
+    T.snap({ type: 'pointers', text: { key: 'pointers', params: Object.assign({ r, n, last: r + n - 1 }, extra) } });
+    let j = 0;
+    for (let k = 0; k < n; k++) {
+      while (j < n - 1 && !(r9(r + k) < accSorted[j])) j++;
+      const i = order[j];
+      T.st.pointers.forEach((ptr, m) => { if (m < k) ptr.state = 'done'; });
+      T.st.pointers[k].state = 'active';
+      T.st.pointers[k].hit = i;
+      T.st.pool.push(i);
+      T.snap({
+        type: 'pick',
+        text: { key: 'pick', params: Object.assign({ k: k + 1, ptr: r + k, who: label(i), elo: j ? accSorted[j - 1] : 0, ehi: accSorted[j], rank: j + 1 }, extra) },
+        hl: [i],
+        newSlot: k,
+      });
+    }
+    T.settlePointers();
+  }
+
+  /** Reordena una lista dada en el orden `order` para tenerla por índice de individuo. */
+  function byIndex(order, sorted) {
+    const out = Array(order.length);
+    order.forEach((idx, j) => { out[idx] = sorted[j]; });
+    return out;
+  }
+
+  /** Media y desviación típica (poblacional, dividiendo entre N). */
+  function meanSd(f) {
+    const m = sum(f) / f.length;
+    return { mean: m, sd: Math.sqrt(sum(f.map((v) => (v - m) * (v - m))) / f.length) };
   }
 
   /** Copias que recibe cada individuo en la población de padres. */
@@ -182,7 +247,7 @@
   const api = {
     MIN_N, MAX_N, MAX_F, LABELS, GOLDBERG, label, range, sum, r9,
     randomFitness, validatePopulation, validateProportional, drawSource, cumulative, firstAbove,
-    ascending, newTrace, copies, summary, doneParams, R,
+    ascending, newTrace, copies, summary, doneParams, spinLoop, susLoop, byIndex, meanSd, R,
   };
   if (isNode) module.exports = api;
   else (root.GAX = root.GAX || {}).selUtils = api;

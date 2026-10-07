@@ -275,3 +275,150 @@ test('trazas: la población de padres crece de uno en uno y el resumen final cua
     }
   }
 });
+
+// ---------- Fase 2: contraejemplo, escalado, Boltzmann y ranking exponencial ----------
+
+const { offsetRoulette } = require('../js/operators/offset.js');
+const { scaledRoulette, scale } = require('../js/operators/scaled-roulette.js');
+const { boltzmannSelection } = require('../js/operators/boltzmann.js');
+const { exponentialRanking } = require('../js/operators/exponential-ranking.js');
+
+const probsOf = (res) => res.aux.rows.find((r) => r.id === 'p').values;
+
+test('contraejemplo: con C = 0 es la ruleta; con C grande las probabilidades se igualan', () => {
+  const r = rng.mulberry32(21);
+  for (let t = 0; t < 500; t++) {
+    const f = randomPop(r, true);
+    const a = offsetRoulette(f, { params: { shift: 0 }, seed: t + 1 });
+    assert.deepEqual(a.pool, rouletteSelection(f, { draws: a.draws }).pool);
+    const p = probsOf(offsetRoulette(f, { params: { shift: 2000 }, seed: t + 1 }));
+    p.forEach((x) => assert.ok(Math.abs(x - 1 / f.length) < 0.07));
+    // el orden de las probabilidades es el de la aptitud
+    for (let i = 0; i < f.length; i++) for (let j = 0; j < f.length; j++) if (f[i] > f[j]) assert.ok(p[i] > p[j]);
+  }
+});
+
+test('escalado lineal: conserva la media; el mejor vale cm · media o el peor vale 0', () => {
+  const r = rng.mulberry32(22);
+  for (let t = 0; t < 2000; t++) {
+    const f = randomPop(r, true);
+    const cm = [1.2, 1.5, 2, 2.5, 3][t % 5];
+    const sc = scale(f, 'linear', { cm });
+    const mean = S.sum(f) / f.length;
+    if (sc.mode === 'flat') { assert.deepEqual(sc.fs, f); continue; }
+    assert.ok(Math.abs(S.sum(sc.fs) / f.length - mean) < 1e-9 * Math.max(1, mean));
+    sc.fs.forEach((x) => assert.ok(x >= 0));
+    const best = Math.max.apply(null, sc.fs);
+    if (sc.mode === 'max') assert.ok(Math.abs(best - cm * mean) < 1e-9 * Math.max(1, mean));
+    else assert.ok(Math.min.apply(null, sc.fs) < 1e-9 && best <= cm * mean + 1e-9);
+    // el orden se conserva
+    for (let i = 0; i < f.length; i++) for (let j = 0; j < f.length; j++) if (f[i] > f[j]) assert.ok(sc.fs[i] > sc.fs[j]);
+  }
+  // ejemplo a mano: f = 10 · 20 · 30 · 40, media 25, máx 40, cm = 1,5 → a = 0,8333…, b = 4,1666… (el mejor vale 37,5)
+  const sc = scale([10, 20, 30, 40], 'linear', { cm: 1.5 });
+  assert.equal(sc.mode, 'max');
+  assert.ok(Math.abs(sc.fs[3] - 37.5) < 1e-9 && Math.abs(sc.fs[0] - 12.5) < 1e-9);
+});
+
+test('truncamiento sigma: f′ = máx(0, f − (media − c·σ)) y nunca elige a los que quedan en 0', () => {
+  // f = 2 · 4 · 4 · 4 · 5 · 5 · 7 · 9: media 5, σ = 2; con c = 1 la base es 3
+  const f = [2, 4, 4, 4, 5, 5, 7, 9];
+  const sc = scale(f, 'sigma', { c: 1 });
+  assert.ok(Math.abs(sc.base - 3) < 1e-12);
+  assert.deepEqual(sc.fs.map((x) => Math.round(x * 1e9) / 1e9), [0, 1, 1, 1, 2, 2, 4, 6]);
+  for (let t = 0; t < 300; t++) assert.ok(!scaledRoulette(f, { variant: 'sigma', params: { c: 1 }, seed: t + 1 }).pool.includes(0));
+  // todos iguales: no se escala
+  assert.deepEqual(scale([7, 7, 7, 7], 'sigma', { c: 2 }).fs, [7, 7, 7, 7]);
+});
+
+test('Boltzmann: no cambia al desplazar la aptitud; con T alta casi al azar y con T baja gana el mejor', () => {
+  const f = [12, 30, 5, 21, 9];
+  const shifted = f.map((x) => x + 500);
+  for (const temp of [1, 5, 20]) {
+    const a = probsOf(boltzmannSelection(f, { params: { temp }, seed: 1 }));
+    const b = probsOf(boltzmannSelection(shifted, { params: { temp }, seed: 1 }));
+    a.forEach((x, i) => assert.ok(Math.abs(x - b[i]) < 1e-12));
+    // cociente de probabilidades = exp(Δf / T)
+    assert.ok(Math.abs(a[1] / a[3] / Math.exp((30 - 21) / temp) - 1) < 1e-9);
+  }
+  probsOf(boltzmannSelection(f, { params: { temp: 50 }, seed: 1 })).forEach((x) => assert.ok(Math.abs(x - 0.2) < 0.1));
+  // con T = 1 el mejor (B) se lo lleva casi todo; r = 0,00 aún cae en el sector diminuto de A
+  let bWins = 0;
+  for (let t = 0; t < 100; t++) bWins += boltzmannSelection(f, { params: { temp: 1 }, seed: t + 1 }).pool.filter((i) => i === 1).length;
+  assert.ok(bWins / 500 > 0.95, `${bWins}`);
+});
+
+test('ranking exponencial: cada rango tiene 1/c veces la probabilidad del anterior', () => {
+  const r = rng.mulberry32(23);
+  for (let t = 0; t < 1000; t++) {
+    const f = randomPop(r, false);
+    const c = [0.5, 0.65, 0.8, 0.95][t % 4];
+    const res = exponentialRanking(f, { params: { base: c }, seed: t + 1, variant: t % 2 ? 'sus' : 'roulette' });
+    const order = S.ascending(f);
+    const p = res.aux.rows.find((x) => x.id === 'p' || x.id === 'e').values;
+    for (let j = 1; j < f.length; j++) assert.ok(Math.abs(p[order[j]] / p[order[j - 1]] - 1 / c) < 1e-9);
+    assert.equal(res.pool.length, f.length);
+  }
+});
+
+// ---------- Muestreo rápido (comparación, copias y simulación) ----------
+
+const CMP = require('../js/compare.js');
+const registry = require('../js/registry.js');
+
+test('muestreo rápido: elige los mismos padres que cada mecanismo animado con los mismos números', () => {
+  const PARAMS = {
+    offset: [{ shift: 0 }, { shift: 1000 }],
+    'scaled-roulette': [{ cm: 1.5, c: 1 }, { cm: 2, c: 2 }],
+    boltzmann: [{ temp: 3 }, { temp: 20 }],
+    'linear-ranking': [{ sp: 1.2 }, { sp: 2 }],
+    'exponential-ranking': [{ base: 0.5 }, { base: 0.9 }],
+    tournament: [{ k: 2, p: 1 }, { k: 3, p: 0.7 }],
+    truncation: [{ tau: 0.3 }, { tau: 0.8 }],
+  };
+  const ready = registry.families.flatMap((f) => f.operators).filter((o) => o.ready).map((o) => o.id);
+  const r = rng.mulberry32(31);
+  for (const id of ready) {
+    assert.ok(CMP.SAMPLERS[id], `falta el muestreador de ${id}`);
+    const spec = require(`../js/operators/${id}.js`).spec;
+    for (let t = 0; t < 400; t++) {
+      const f = randomPop(r, !!spec.proportional);
+      const params = (PARAMS[id] || [{}])[t % 2];
+      const variant = spec.variants ? spec.variants[t % spec.variants.length] : undefined;
+      const res = spec.run(f, { variant, params, seed: t + 1 });
+      const src = S.drawSource({ draws: res.draws });
+      assert.deepEqual(CMP.SAMPLERS[id](f, { variant, params }, src.next), res.pool, `${id} ${variant} ${f}`);
+      assert.equal(src.used.length, res.draws.length);
+    }
+  }
+});
+
+test('copias en muchas repeticiones: SUS solo da ⌊e⌋ o ⌈e⌉; la ruleta, más; medias ≈ esperadas', () => {
+  const f = [12, 30, 5, 21, 9, 17];
+  const total = S.sum(f);
+  const sus = CMP.copiesDistribution('sus', f, { params: {} }, 2000, 5);
+  const rou = CMP.copiesDistribution('roulette', f, { params: {} }, 2000, 5);
+  f.forEach((fi, i) => {
+    const e = (6 * fi) / total;
+    sus.dist[i].forEach((p, c) => { if (p > 0) assert.ok(c === Math.floor(e) || c === Math.ceil(e)); });
+    assert.ok(Math.abs(sus.mean[i] - e) < 0.05 && Math.abs(rou.mean[i] - e) < 0.08);
+    assert.ok(sus.sd[i] < rou.sd[i]);
+  });
+});
+
+test('métricas y simulación: más presión con torneo grande que con la ruleta desplazada', () => {
+  const f = [12, 30, 5, 21, 9, 17, 26, 3];
+  const flat = CMP.metrics('offset', f, { params: { shift: 2000 } }, 1000, 1);
+  const hard = CMP.metrics('tournament', f, { params: { k: 5, p: 1 } }, 1000, 1);
+  assert.ok(hard.intensity > flat.intensity + 0.5);
+  assert.ok(hard.lost > flat.lost);
+  assert.ok(Math.abs(CMP.metrics('sus', f, { params: {} }, 1000, 1).best - (8 * 30) / S.sum(f)) < 0.05);
+  const simT = CMP.simulate('truncation', { params: { tau: 0.5 }, variant: 'random' }, { runs: 10, gens: 30, seed: 2 });
+  const simO = CMP.simulate('offset', { params: { shift: 1000 } }, { runs: 10, gens: 30, seed: 2 });
+  assert.equal(simT.distinct[0], 50);
+  assert.ok(simT.distinct[10] < simO.distinct[10]);
+  assert.ok(simT.meanFit[10] > simO.meanFit[10]);
+  assert.ok(simT.takeover != null && simT.takeover < 20);
+  // reproducible
+  assert.deepEqual(CMP.simulate('sus', { params: {} }, { runs: 5, gens: 10, seed: 3 }), CMP.simulate('sus', { params: {} }, { runs: 5, gens: 10, seed: 3 }));
+});

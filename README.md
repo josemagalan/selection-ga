@@ -27,8 +27,8 @@ It completes a series with [Crossover in genetic algorithms](https://github.com/
 
 | Family | Mechanisms |
 | --- | --- |
-| Fitness-proportionate | Roulette wheel and stochastic universal sampling (SUS); Boltzmann selection and a counterexample on shifted fitness — coming soon |
-| Rank-based | Linear ranking (selection pressure s; roulette or SUS sampling) and truncation selection (proportion τ; at random or in turns); exponential ranking — coming soon |
+| Fitness-proportionate | Roulette wheel, stochastic universal sampling (SUS), roulette wheel with fitness scaling (linear scaling, cm; sigma truncation, c) and Boltzmann selection (temperature T; roulette or SUS sampling), plus a counterexample showing why the roulette wheel loses its pressure when a constant is added to fitness |
+| Rank-based | Linear ranking (selection pressure s), exponential ranking (base c), both with roulette or SUS sampling, and truncation selection (proportion τ; at random or in turns) |
 | Tournament | Tournament selection (size k, with or without replacement; stochastic with probability p) |
 | Replacement (survivors) | Generational with elitism, steady state, (μ + λ) and (μ, λ) — coming soon |
 
@@ -39,7 +39,12 @@ It completes a series with [Crossover in genetic algorithms](https://github.com/
 - **Learn more panel:** explanation of the mechanism, pseudocode that highlights the line of the current step, Python and JavaScript implementations to copy or download (tested to choose exactly the same parents as the tool with the same random numbers), and references, with the course’s core textbooks (Talbi, 2009; Bautista-Valhondo, 2020) always first after the original source.
 - **Exact ties:** the random numbers have two decimals and the limits of the stretches are shown with as many decimals as needed, so that every step can be checked by hand; cumulative values are rounded to nine decimals in the tool and in the downloadable code, so that 0.1 + 0.2 is 0.3 and ties are resolved as by hand.
 
-Practice mode, the comparison screen (with the selection-pressure and diversity simulations inherited from SelectionMechanisms) and question banks for Moodle are being developed.
+- **Copies in 1000 repetitions:** for the current population and settings, how often each individual gets 0, 1, 2… copies, next to its expected copies, so that the noise of the roulette wheel and the minimum spread of SUS can be seen at a glance.
+- **Practice mode (“predict the parents”):** the random numbers (or the tournament contestants, or the places drawn among the best) are given exactly as the mechanism uses them; students compute probabilities, ranks and winners, write the parents and get them checked slot by slot.
+- **Compare mechanisms:** every mechanism applied to the same population, with the parents each one chooses and a table, averaged over 1000 repetitions, of the copies of the best, the selection intensity and the loss of diversity (Blickle and Thiele, 1996) and the sampling variability (Baker, 1987).
+- **Several generations of selection only:** following the SelectionMechanisms Shiny app, the pool of parents becomes the next population, with no crossover or mutation, for 40 generations of 50 individuals and 50 repetitions; line charts of distinct individuals and mean fitness, takeover time and how often the best is lost through genetic drift.
+
+Question banks for Moodle and the replacement (survivor selection) mechanisms are being developed.
 
 ## Pedagogical purpose
 
@@ -59,7 +64,7 @@ Requires Node.js 22 or later; Python 3 is optional (it is used to test the downl
 npm test
 ```
 
-The tests check every mechanism (worked examples, thousands of random cases contrasted with an independent implementation in exact integer arithmetic, statistical properties such as the frequencies of the roulette wheel and the binary tournament, and SUS’s zero bias and minimum spread), that the downloadable code chooses the same parents as the tool with the same random numbers, and that the pseudocode and the narration cover every animation step. They run on every push with GitHub Actions.
+The tests check every mechanism (worked examples, thousands of random cases contrasted with an independent implementation in exact integer arithmetic, statistical properties such as the frequencies of the roulette wheel and the binary tournament, and SUS’s zero bias and minimum spread, the invariances of scaling and Boltzmann selection), that the fast samplers used for the comparison choose exactly the same parents as the animated mechanisms, that the practice mode gives enough data for a unique answer, that the downloadable code chooses the same parents as the tool with the same random numbers, and that the pseudocode and the narration cover every animation step. They run on every push with GitHub Actions.
 
 ## Project structure
 
@@ -69,6 +74,8 @@ The tests check every mechanism (worked examples, thousands of random cases cont
 | `js/registry.js`, `js/home.js` | Catalogue of families and mechanisms; home screen |
 | `js/operators/` | Logic of each mechanism: a pure function returning the parents and the trace of steps |
 | `js/viz/population-view.js` | D3 view that draws the trace: population, wheel, tournaments and parents |
+| `js/practice.js` | “Predict the parents”: the data that make the answer unique, and the grading |
+| `js/compare.js`, `js/viz/compare-view.js` | Fast samplers of every mechanism, copies in many repetitions, comparison metrics, many-generation simulation and its screen |
 | `js/content/` | Teaching content of each mechanism: explanation, narration, pseudocode, downloadable code and references |
 | `js/learn.js`, `js/about.js`, `js/app.js` | “Learn more” panel, about page and footer, page controller |
 | `js/i18n.js`, `js/rng.js` | Spanish and English texts; seeded random generator |

@@ -27,6 +27,7 @@
         <p class="lead" data-i18n="homeLead"></p>
       </section>
       <div id="repGrid" class="rep-grid"></div>
+      <p class="home-extra home-cmp"><a href="#cmp=all" id="cmpHomeLink"><span data-i18n="compareHomeLink">Comparar todos los mecanismos con la misma población y simular varias generaciones</span> <span aria-hidden="true">→</span></a></p>
       <p class="home-extra home-sister">
         <span data-i18n="sisterHomeLead">De la misma serie:</span>
         <a href="https://josemagalan.github.io/crossover-ga/" id="sisterCrossover"><span data-i18n="sisterHomeCrossover">Cruces en algoritmos genéticos</span> <span aria-hidden="true">→</span></a>
@@ -69,6 +70,9 @@
             <button type="button" id="btnRandom" class="btn primary" data-i18n="randomPop">Población aleatoria</button>
             <button type="button" id="btnGoldberg" class="btn" data-i18n="goldberg">Ejemplo de Goldberg (x²)</button>
             <button type="button" id="btnDraw" class="btn" data-i18n="drawAgain" hidden>Sortear de nuevo</button>
+            <button type="button" id="btnPractice" class="btn" data-i18n="practiceMode">Practicar</button>
+            <button type="button" id="btnCopies" class="btn" data-i18n="showCopies" aria-pressed="false">Copias en 1000 repeticiones</button>
+            <a id="btnCompare" class="btn" href="#" data-i18n="compareOperators">Comparar mecanismos</a>
           </div>
         </div>
         <p id="variantDesc" class="hint variant-desc" hidden></p>
@@ -128,6 +132,31 @@
         <ul class="legend" id="legend"></ul>
       </section>
 
+      <section class="card practice" id="practiceCard" hidden aria-labelledby="practice-title">
+        <h2 id="practice-title" class="learn-title" data-i18n="practiceTitle">Practicar: predice los padres</h2>
+        <p class="hint" id="practiceIntro"></p>
+        <div id="practiceGivens" class="practice-givens" hidden></div>
+        <form id="practiceForm" class="manual-form practice-form" novalidate>
+          <div class="manual-grid">
+            <label for="prM" data-i18n="yourParents">Tus padres</label>
+            <input type="text" id="prM" autocomplete="off" spellcheck="false">
+          </div>
+          <div class="manual-actions">
+            <button type="submit" class="btn primary" data-i18n="checkPrediction">Comprobar</button>
+            <button type="button" id="btnPracticeExit" class="btn" data-i18n="seeAnimation" hidden>Ver la animación</button>
+            <p id="practiceErr" class="error" role="alert"></p>
+          </div>
+        </form>
+        <div id="practiceResult" class="practice-result" aria-live="polite"></div>
+      </section>
+
+      <section class="card copies" id="copiesCard" hidden aria-labelledby="copies-title">
+        <h2 id="copies-title" class="learn-title" data-i18n="copiesTitle">Copias en 1000 repeticiones</h2>
+        <p class="hint" data-i18n="copiesIntro"></p>
+        <div class="table-scroll"><table id="copiesTable" class="copies-table"></table></div>
+        <p class="hint" id="copiesNote"></p>
+      </section>
+
       <section class="card learn" aria-labelledby="learn-title">
         <h2 id="learn-title" class="learn-title" data-i18n="learnTitle">Para saber más</h2>
         <div class="tabs" role="tablist" aria-labelledby="learn-title">
@@ -172,6 +201,63 @@
       </footer>
     </main>
 
+    <main id="cmpView" hidden>
+      <header class="op-head">
+        <a class="back" href="#" id="cmpBack"><span aria-hidden="true">←</span> <span id="cmpBackText"></span></a>
+        <p class="eyebrow" data-i18n="cmpEyebrow">Todas las familias</p>
+        <h1 data-i18n="compareTitle">Comparar mecanismos</h1>
+        <p class="subtitle" data-i18n="compareLead"></p>
+      </header>
+
+      <section class="card" aria-labelledby="cmp-pop-title">
+        <div class="cmp-section-head">
+          <h2 id="cmp-pop-title" class="learn-title" data-i18n="comparePopTitle">Población</h2>
+          <div class="buttons">
+            <button type="button" id="cmpRandom" class="btn primary" data-i18n="randomPop">Población aleatoria</button>
+            <button type="button" id="cmpGoldberg" class="btn" data-i18n="goldberg">Ejemplo de Goldberg (x²)</button>
+            <button type="button" id="cmpDraw" class="btn" data-i18n="drawAgain">Sortear de nuevo</button>
+          </div>
+        </div>
+        <svg id="cmpPop" class="cmp-pop" role="img" aria-labelledby="cmp-pop-title"></svg>
+      </section>
+
+      <section class="card" aria-labelledby="cmp-pools-title">
+        <h2 id="cmp-pools-title" class="learn-title" data-i18n="comparePoolsTitle">Padres de esta población</h2>
+        <p class="hint" data-i18n="comparePoolsNote"></p>
+        <div id="cmpPools" class="cmp-children"></div>
+      </section>
+
+      <section class="card" aria-labelledby="cmp-table-title">
+        <div class="cmp-section-head">
+          <h2 id="cmp-table-title" class="learn-title" data-i18n="compareTableTitle">Presión y diversidad en 1000 repeticiones</h2>
+          <span class="cmp-progress" id="cmpProgress" aria-live="polite"></span>
+        </div>
+        <p class="hint" data-i18n="compareTableNote"></p>
+        <div class="table-scroll"><table id="cmpTable" class="cmp-table"></table></div>
+        <h3 class="cmp-defs-title" data-i18n="compareDefsTitle">Qué mide cada columna</h3>
+        <dl id="cmpDefs" class="cmp-defs"></dl>
+      </section>
+
+      <section class="card" aria-labelledby="cmp-sim-title">
+        <div class="cmp-section-head">
+          <h2 id="cmp-sim-title" class="learn-title" data-i18n="simTitle">Varias generaciones solo con selección</h2>
+          <div class="buttons">
+            <button type="button" id="simAgain" class="btn" data-i18n="simAgain">Simular de nuevo</button>
+          </div>
+        </div>
+        <p class="hint" id="simIntro"></p>
+        <div class="sim-chips" id="simChips" role="group" aria-labelledby="simChipsLabel">
+          <span id="simChipsLabel" class="cmp-mode-label" data-i18n="simChipsLabel">Mecanismos en las gráficas (hasta 4)</span>
+        </div>
+        <div class="sim-charts">
+          <figure class="sim-chart"><figcaption data-i18n="simDistinctTitle">Individuos distintos</figcaption><div class="sim-plot" id="simDistinct"></div></figure>
+          <figure class="sim-chart"><figcaption data-i18n="simFitTitle">Aptitud media</figcaption><div class="sim-plot" id="simFit"></div></figure>
+        </div>
+        <div class="table-scroll"><table id="simTable" class="cmp-table sim-table"></table></div>
+        <p class="hint cmp-refs" data-i18n="simRefs"></p>
+      </section>
+    </main>
+
     <main id="aboutView" hidden>
       <a class="back" href="#" id="aboutBack"><span aria-hidden="true">←</span> <span data-i18n="allOperators">Todos los mecanismos</span></a>
       <article class="card about" id="aboutBody"></article>
@@ -187,16 +273,27 @@
   <script src="js/operators/sel-utils.js"></script>
   <script src="js/operators/roulette.js"></script>
   <script src="js/operators/sus.js"></script>
+  <script src="js/operators/offset.js"></script>
+  <script src="js/operators/scaled-roulette.js"></script>
+  <script src="js/operators/boltzmann.js"></script>
   <script src="js/operators/linear-ranking.js"></script>
+  <script src="js/operators/exponential-ranking.js"></script>
   <script src="js/operators/truncation.js"></script>
   <script src="js/operators/tournament.js"></script>
   <script src="js/viz/population-view.js"></script>
+  <script src="js/compare.js"></script>
+  <script src="js/practice.js"></script>
   <script src="js/content/common.js"></script>
   <script src="js/content/roulette.js"></script>
   <script src="js/content/sus.js"></script>
+  <script src="js/content/offset.js"></script>
+  <script src="js/content/scaled-roulette.js"></script>
+  <script src="js/content/boltzmann.js"></script>
   <script src="js/content/linear-ranking.js"></script>
+  <script src="js/content/exponential-ranking.js"></script>
   <script src="js/content/truncation.js"></script>
   <script src="js/content/tournament.js"></script>
+  <script src="js/viz/compare-view.js"></script>
   <script src="js/about.js"></script>
   <script src="js/learn.js"></script>
   <script src="js/home.js"></script>

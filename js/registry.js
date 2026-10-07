@@ -41,16 +41,34 @@
           },
         },
         {
-          id: 'boltzmann',
-          ready: false,
-          name: { es: 'Selección de Boltzmann', en: 'Boltzmann selection' },
-          summary: { es: 'La aptitud se transforma con exp(f/T); la temperatura T regula la presión.', en: 'Fitness is transformed with exp(f/T); the temperature T controls the pressure.' },
-        },
-        {
           id: 'offset',
-          ready: false,
+          ready: true,
           name: { es: 'Contraejemplo: aptitud desplazada', en: 'Counterexample: shifted fitness' },
           summary: { es: 'Por qué la ruleta necesita escalado: con f + 1000 casi todos valen lo mismo.', en: 'Why the roulette wheel needs scaling: with f + 1000 almost everyone is worth the same.' },
+          subtitle: {
+            es: 'Qué le pasa a la ruleta si se suma una constante C a todas las aptitudes: el orden no cambia, pero la presión desaparece',
+            en: 'What happens to the roulette wheel if a constant C is added to every fitness value: the order does not change, but the pressure vanishes',
+          },
+        },
+        {
+          id: 'scaled-roulette',
+          ready: true,
+          name: { es: 'Ruleta con escalado', en: 'Roulette wheel with scaling' },
+          summary: { es: 'La aptitud se escala (lineal o truncamiento sigma) antes de girar la ruleta.', en: 'Fitness is scaled (linear or sigma truncation) before spinning the wheel.' },
+          subtitle: {
+            es: 'Ruleta con escalado de la aptitud: se transforma f en f′ para controlar la presión y después se gira la ruleta',
+            en: 'Roulette wheel with fitness scaling: f is transformed into f′ to control the pressure and then the wheel is spun',
+          },
+        },
+        {
+          id: 'boltzmann',
+          ready: true,
+          name: { es: 'Selección de Boltzmann', en: 'Boltzmann selection' },
+          summary: { es: 'La aptitud se transforma con exp(f/T); la temperatura T regula la presión.', en: 'Fitness is transformed with exp(f/T); the temperature T controls the pressure.' },
+          subtitle: {
+            es: 'Selección de Boltzmann: cada individuo pesa exp((f − f_max)/T) y la temperatura T regula la presión',
+            en: 'Boltzmann selection: each individual weighs exp((f − f_max)/T) and the temperature T controls the pressure',
+          },
         },
       ],
     },
@@ -74,6 +92,16 @@
           },
         },
         {
+          id: 'exponential-ranking',
+          ready: true,
+          name: { es: 'Ranking exponencial', en: 'Exponential ranking' },
+          summary: { es: 'La probabilidad crece de forma geométrica con el puesto.', en: 'Probability grows geometrically with the rank.' },
+          subtitle: {
+            es: 'Ranking exponencial: se ordena la población y cada puesto tiene 1/c veces la probabilidad del anterior',
+            en: 'Exponential ranking: the population is sorted and each rank gets 1/c times the probability of the previous one',
+          },
+        },
+        {
           id: 'truncation',
           ready: true,
           name: { es: 'Selección por truncamiento', en: 'Truncation selection' },
@@ -82,12 +110,6 @@
             es: 'Selección por truncamiento: se descarta a los peores y los padres salen solo de la proporción τ de mejores',
             en: 'Truncation selection: the worst are discarded and parents come only from the best proportion τ',
           },
-        },
-        {
-          id: 'exponential-ranking',
-          ready: false,
-          name: { es: 'Ranking exponencial', en: 'Exponential ranking' },
-          summary: { es: 'La probabilidad crece de forma geométrica con el puesto.', en: 'Probability grows geometrically with the rank.' },
         },
       ],
     },

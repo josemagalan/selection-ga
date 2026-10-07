@@ -141,6 +141,16 @@
       details: { es: '(T. C. Fogarty, ed., pp. 80–94). Springer', en: '(T. C. Fogarty, Ed., pp. 80–94). Springer' },
       url: 'https://doi.org/10.1007/3-540-58483-8_7',
     },
+    delaMaza: {
+      id: 'de-la-maza-tidor-1993',
+      type: 'inproceedings',
+      authors: 'de la Maza, M., & Tidor, B.',
+      year: '1993',
+      title: 'An analysis of selection procedures with particular attention paid to proportional and Boltzmann selection',
+      container: 'Proceedings of the Fifth International Conference on Genetic Algorithms',
+      details: { es: '(S. Forrest, ed., pp. 124–131). Morgan Kaufmann', en: '(S. Forrest, Ed., pp. 124–131). Morgan Kaufmann' },
+      url: null,
+    },
     selectionMechanisms: {
       id: 'galan-selectionmechanisms',
       type: 'software',

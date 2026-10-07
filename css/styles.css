@@ -21,6 +21,9 @@
   --accent: #0072b2;
   --accent-ink: #ffffff;
   --p1-soft: #8cc1e3;     /* azul claro: sectores alternos de la ruleta */
+  /* Colores de las series de las gráficas (paleta categórica validada para daltonismo) */
+  --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a; --series-4: #eda100;
+  --series-5: #e87ba4; --series-6: #008300; --series-7: #4a3aa7; --series-8: #e34948;
   --radius: 14px;
   color-scheme: light;
 }
@@ -49,6 +52,8 @@
     --accent: #56b4e9;
     --accent-ink: #0b1b26;
     --p1-soft: #2f6f97;
+    --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500;
+    --series-5: #d55181; --series-6: #008300; --series-7: #9085e9; --series-8: #e66767;
     color-scheme: dark;
   }
 }
@@ -1067,3 +1072,54 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .sw-cut { width: 4px; border-radius: 0; background: repeating-linear-gradient(180deg, var(--conflict) 0 5px, transparent 5px 9px); }
 #viz.compact .row-label { font-size: 12px; }
 #viz.compact .row-label.small { font-size: 11px; }
+.bar-num.scaled { fill: var(--p1-text); }
+
+/* Copias en 1000 repeticiones */
+.copies-table { border-collapse: collapse; font-size: 0.9rem; font-variant-numeric: tabular-nums; min-width: 100%; }
+.copies-table th, .copies-table td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+.copies-table thead th, .copies-table tr:first-child th { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
+.copies-table .num { text-align: right; }
+.copies-table td.dist { text-align: center; min-width: 58px; background: color-mix(in srgb, var(--p1) calc(var(--a, 0) * 100%), transparent); }
+.copies-table td.dist.strong { color: var(--p1-ink); font-weight: 700; }
+.copies-table td.dist.near { outline: 2px dashed var(--ink); outline-offset: -3px; }
+.copies-table th[scope="row"] { font-weight: 700; }
+.practice-slots { list-style: none; margin: 2px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 4px 18px; font-size: 0.92rem; font-variant-numeric: tabular-nums; }
+.practice-slot-label { font-weight: 600; color: var(--muted); }
+
+/* Comparar mecanismos */
+.cmp-pop { display: block; width: 100%; height: auto; margin: 4px auto 0; }
+.pool-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.pool-chips .cmp-gene { width: 34px; }
+.sim-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0 4px; }
+.sim-chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--card); color: var(--muted); font: inherit; font-size: 0.86rem; cursor: pointer;
+}
+.sim-chip[aria-pressed="true"] { color: var(--ink); border-color: var(--c); box-shadow: inset 0 0 0 1px var(--c); font-weight: 600; }
+.sim-chip:disabled { opacity: 0.45; cursor: not-allowed; }
+.sim-sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; background: var(--c); vertical-align: -1px; }
+.sim-chip[aria-pressed="false"] .sim-sw { opacity: 0.35; }
+.sim-charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-top: 8px; }
+.sim-chart { margin: 0; }
+.sim-chart figcaption { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
+.sim-plot { position: relative; }
+.sim-plot svg { display: block; width: 100%; height: auto; }
+.sim-grid line { stroke: var(--line); stroke-width: 1; }
+.sim-grid .sim-axis { stroke: var(--muted); }
+.sim-tick, .sim-axis-label { font-size: 11px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.sim-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.sim-end, .sim-dot { stroke: var(--card); stroke-width: 2; }
+.sim-label { font-size: 11.5px; font-weight: 600; fill: var(--ink); }
+.sim-hair { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; pointer-events: none; }
+.sim-zone { fill: transparent; cursor: crosshair; outline: none; }
+.sim-zone:focus-visible { stroke: var(--focus); stroke-width: 2; }
+.sim-tip {
+  position: absolute; top: 8px; min-width: 150px; padding: 8px 10px; border-radius: 8px; pointer-events: none;
+  background: var(--card); border: 1px solid var(--line); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12); font-size: 0.8rem;
+}
+.sim-tip[hidden] { display: none; }
+.sim-tip-title { font-weight: 700; margin-bottom: 4px; }
+.sim-tip-row { display: grid; grid-template-columns: 12px 1fr auto; gap: 6px; align-items: center; }
+.sim-tip-val { font-variant-numeric: tabular-nums; font-weight: 600; }
+.sim-table td { font-variant-numeric: tabular-nums; }
+.pcol .fbar { fill: var(--p1); }

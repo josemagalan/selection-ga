@@ -58,6 +58,7 @@
       const hasChrom = !!problem.chrom;
       const yRows = yChip + chipH + (hasChrom ? 52 : 12) + 16;
       const rowIds = aux.rows.map((r) => r.id).concat(['copies']);
+      const rowKeys = aux.rows.map((r) => r.labelKey || `row_${r.id}`).concat(['row_copies']);
       const yRowsEnd = yRows + rowIds.length * ROW_H;
       const pieR = showPie ? 128 : 0;
       const pieCy = yBarTop + 10 + pieR;
@@ -73,7 +74,7 @@
       const H = yPool + chipH + 26;
       return {
         n, W, H, compact, left, right, cell, s, x0, yBarTop, barH, yBase, yChip, chipH, hasChrom,
-        yRows, rowIds, showPie, pieR, pieCx, pieCy, yStrip, stripH, yArena, arenaH, yPool,
+        yRows, rowIds, rowKeys, showPie, pieR, pieCx, pieCy, yStrip, stripH, yArena, arenaH, yPool,
         stripX0: left, stripW: W - right - left,
       };
     }
@@ -115,7 +116,7 @@
         { y: g.yChip + g.chipH / 2, key: 'rowIndividual', cls: 'row-label' },
       ];
       if (g.hasChrom) lab.push({ y: g.yChip + g.chipH + 22, key: 'rowChrom', cls: 'row-label small' });
-      g.rowIds.forEach((id, k) => lab.push({ y: g.yRows + k * ROW_H + ROW_H / 2, key: `row_${id}`, cls: 'row-label small', row: id }));
+      g.rowIds.forEach((id, k) => lab.push({ y: g.yRows + k * ROW_H + ROW_H / 2, key: g.rowKeys[k], cls: 'row-label small', row: id }));
       lab.push({ y: g.yPool + g.chipH / 2, key: 'rowPool', cls: 'row-label' });
       if (g.yArena != null) lab.push({ y: g.yArena + g.arenaH / 2, key: 'rowArena', cls: 'row-label', arena: true });
       if (g.yStrip != null) lab.push({ y: g.yStrip + g.stripH / 2, key: 'rowStrip', cls: 'row-label' });
@@ -125,9 +126,11 @@
         .classed('row-hidden', (d) => !!d.row)
         .each(function (d) { setLabel(this, g.compact ? label(`${d.key}Short`) : label(d.key)); });
       // Suma de aptitudes (aparece en el paso «suma»)
+      const aux = problem.aux;
+      const sumValue = aux.sumValue != null ? aux.sumValue : problem.fitness.reduce((a, b) => a + b, 0);
       gLabels.selectAll('text.sum-label').data([0]).join('text').attr('class', 'sum-label')
-        .attr('x', g.left - 12).attr('y', g.yBarTop + g.barH / 2 + 20).attr('dy', '0.36em')
-        .text(`Σf = ${problem.fitness.reduce((a, b) => a + b, 0)}`);
+        .attr('x', g.left - 12).attr('y', g.yBarTop + g.barH / 2 + 34).attr('dy', '0.36em')
+        .text(`Σ${aux.sumSymbol || 'f'} = ${fmt[aux.barsKind || 'fit'](sumValue)}`);
       // Números de los huecos de la población de padres
       gPool.selectAll('g.slot').data(d3.range(g.n)).join((enter) => {
         const e = enter.append('g').attr('class', 'slot');
@@ -150,8 +153,9 @@
 
     function renderCols(step, animate) {
       const g = geo;
-      const F = problem.fitness;
-      const maxF = Math.max(1, Math.max.apply(null, F));
+      const F = step.bars || problem.fitness;
+      const barFmt = step.bars ? fmt[problem.aux.barsKind || 'fit'] : fmt.fit;
+      const maxF = Math.max(step.bars ? 1e-9 : 1, Math.max.apply(null, F));
       const pos = Array(g.n);
       step.order.forEach((idx, j) => { pos[idx] = j; });
       const hl = new Set(step.hl || []);
@@ -167,6 +171,10 @@
         return d.row === 'copies' ? !showCopies : !rowsShown.has(d.row);
       });
       gLabels.select('text.sum-label').classed('visible', !!step.sum && !g.compact);
+      // La fila de las barras dice qué miden: la aptitud o su transformación (f + C, f′, w)
+      const barsKey = step.bars && problem.aux.barsLabelKey ? problem.aux.barsLabelKey : 'rowFitness';
+      gLabels.selectAll('text.row-label').filter((d) => d.key === 'rowFitness')
+        .each(function () { setLabel(this, g.compact ? label(`${barsKey}Short`) : label(barsKey)); });
 
       const cols = gCols.selectAll('g.col').data(d3.range(g.n), (i) => i).join((enter) => {
         const c = enter.append('g').attr('class', 'col');
@@ -186,13 +194,15 @@
         .classed('contestant', (i) => cont.has(i));
 
       const bh = (i) => Math.max(F[i] > 0 ? 2 : 0, (F[i] / maxF) * (g.barH - 18));
-      cols.select('.fbar')
+      tr(cols.select('.fbar'))
         .attr('x', -g.s / 2).attr('width', g.s)
         .attr('y', (i) => g.yBase - bh(i)).attr('height', (i) => bh(i)).attr('rx', 3);
+      tr(cols.select('.bar-num'))
+        .attr('x', 0).attr('y', (i) => g.yBase - bh(i) - 6);
       cols.select('.bar-num')
-        .attr('x', 0).attr('y', (i) => g.yBase - bh(i) - 6)
-        .style('font-size', `${Math.round(Math.min(15, g.s * 0.36))}px`)
-        .text((i) => fmt.fit(F[i]));
+        .classed('scaled', !!step.bars)
+        .style('font-size', `${Math.round(Math.min(15, g.s * (step.bars ? 0.3 : 0.36)))}px`)
+        .text((i) => barFmt(F[i]));
       cols.select('.chip-rect')
         .attr('x', -g.s / 2).attr('y', g.yChip).attr('width', g.s).attr('height', g.chipH).attr('rx', 6);
       cols.select('.chip-text')

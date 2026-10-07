@@ -11,7 +11,7 @@
 (function () {
   'use strict';
   const G = window.GAX;
-  const { rng: R, i18n, registry, selUtils: S, createPopulationView, createLearnPanel, createHome } = G;
+  const { rng: R, i18n, registry, selUtils: S, createPopulationView, createLearnPanel, createHome, createCompareView } = G;
 
   const $ = (id) => document.getElementById(id);
   const el = {
@@ -28,6 +28,14 @@
     speed: $('speed'), speedOut: $('speedOut'),
     narration: $('narration'),
     aboutView: $('aboutView'), aboutBody: $('aboutBody'), siteFoot: $('siteFoot'),
+    playerBox: $('playerBox'), narrationBox: $('narrationBox'),
+    btnPractice: $('btnPractice'), practiceCard: $('practiceCard'), practiceIntro: $('practiceIntro'),
+    practiceGivens: $('practiceGivens'), practiceForm: $('practiceForm'), prM: $('prM'),
+    practiceErr: $('practiceErr'), practiceResult: $('practiceResult'), btnPracticeExit: $('btnPracticeExit'),
+    btnCopies: $('btnCopies'), copiesCard: $('copiesCard'), copiesTable: $('copiesTable'), copiesNote: $('copiesNote'),
+    btnCompare: $('btnCompare'),
+    cmpView: $('cmpView'), cmpBack: $('cmpBack'), cmpBackText: $('cmpBackText'), cmpProgress: $('cmpProgress'),
+    cmpRandom: $('cmpRandom'), cmpGoldberg: $('cmpGoldberg'), cmpDraw: $('cmpDraw'), simAgain: $('simAgain'), simIntro: $('simIntro'),
   };
 
   const state = {
@@ -40,7 +48,11 @@
     n: 6, seed: 0, fitness: [], example: null,
     result: null, step: 0,
     playing: false, speed: 1, errKey: null,
+    practice: false,     // modo «predice los padres»: paso fijo en la intro, sin reproductor
+    copies: false,       // tarjeta de las copias en 1000 repeticiones
+    cmp: null,           // pantalla de comparar: { from, variant, params, rows, selected, simSeed }
   };
+  const COPIES_REPS = 1000;
   let timer = null;
   let learn = null;
 
@@ -72,10 +84,13 @@
     exp: (v) => fmtCum(v, 2),
     int: (v) => String(v),
     draw: (v) => fmtDraw(v),
+    num: (v) => (Number.isInteger(v) ? String(v) : v.toLocaleString(locale(), { minimumFractionDigits: 1, maximumFractionDigits: 2 })),
+    w: (v) => fmtCum(v, 3),
   };
 
-  const PROB_PARAMS = ['p', 'pBest', 'pWorst', 'lo', 'hi'];
-  const EXP_PARAMS = ['e', 'eBest', 'eWorst', 'elo', 'ehi'];
+  const PROB_PARAMS = ['p', 'pBest', 'pWorst', 'lo', 'hi', 'p0', 'pw', 'pw0'];
+  const EXP_PARAMS = ['e', 'eBest', 'eWorst', 'elo', 'ehi', 'e0', 'e1'];
+  const W_PARAMS = ['ww'];
   const DRAW_PARAMS = ['r', 'ptr', 'last'];
   const fill = (s, params) => (params ? s.replace(/\{(\w+)\}/g, (m, p) => {
     const v = params[p];
@@ -83,6 +98,7 @@
     if (typeof v !== 'number') return v;
     if (PROB_PARAMS.indexOf(p) !== -1) return fmt.prob(v);
     if (EXP_PARAMS.indexOf(p) !== -1) return fmt.exp(v);
+    if (W_PARAMS.indexOf(p) !== -1) return fmt.w(v);
     if (DRAW_PARAMS.indexOf(p) !== -1) return fmtDraw(v);
     return fmtValue(v);
   }) : s);
@@ -133,9 +149,144 @@
       chrom: state.example === 'goldberg' ? S.GOLDBERG.chrom.map((c, i) => `${c}\nx = ${S.GOLDBERG.x[i]}`) : null,
       aux: state.result.aux,
     });
-    goTo(step || 0, false);
+    goTo(state.practice ? 0 : (step || 0), false);
     syncControls();
+    if (state.practice) { renderPracticeGivens(); resetPracticeForm(); }
+    renderCopies();
     el.opSwitch.querySelectorAll('a.op-chip[data-op]').forEach((a) => { a.href = sameProblemHref(a.dataset.op); });
+    el.btnCompare.href = compareHref();
+  }
+
+  // ---------- Modo práctica («predice los padres») ----------
+
+  function setPracticeMode(on) {
+    state.practice = on;
+    el.btnPractice.textContent = t(on ? 'exitPractice' : 'practiceMode');
+    el.btnPractice.setAttribute('aria-pressed', String(on));
+    el.practiceCard.hidden = !on;
+    el.playerBox.hidden = on;
+    el.narrationBox.hidden = on;
+    stop();
+    if (on) {
+      renderPracticeGivens();
+      resetPracticeForm();
+      goTo(0, false);
+    } else goTo(state.step, false);
+  }
+
+  // Lo que el mecanismo ha sorteado: sin ello los padres no tendrían una única respuesta.
+  function renderPracticeGivens() {
+    el.practiceIntro.textContent = t('practiceIntro');
+    const g = G.practice.givens(state.result);
+    const rows = [];
+    g.global.forEach((x) => rows.push({ text: t(x.key, x.params) }));
+    let list = null;
+    if (g.slots.length) {
+      const tour = g.slots[0].key.indexOf('pgTour') === 0;
+      rows.push({ label: t('practiceGivens'), text: '', hint: g.slots[0].key === 'pgTourStoch' ? t('pgTourStochHint') : null });
+      list = document.createElement('ol');
+      list.className = 'practice-slots';
+      g.slots.forEach((x) => {
+        const li = document.createElement('li');
+        const b = document.createElement('span');
+        b.className = 'practice-slot-label';
+        b.textContent = `${t(tour ? 'practiceTour' : 'practiceSlot', { k: x.k })}: `;
+        li.append(b, document.createTextNode(t(x.key, x.params)));
+        list.append(li);
+      });
+    }
+    if (!rows.length) rows.push({ text: t('practiceNoDraws') });
+    el.practiceGivens.hidden = false;
+    el.practiceGivens.replaceChildren(...rows.map((row) => {
+      const p = document.createElement('p');
+      p.className = 'practice-given';
+      if (row.label) {
+        const strong = document.createElement('strong');
+        strong.textContent = `${row.label}: `;
+        p.append(strong);
+      }
+      p.append(document.createTextNode(row.text));
+      if (row.hint) {
+        const hint = document.createElement('span');
+        hint.className = 'practice-given-hint';
+        hint.textContent = ` ${row.hint}`;
+        p.append(hint);
+      }
+      return p;
+    }));
+    if (list) el.practiceGivens.append(list);
+  }
+
+  function resetPracticeForm() {
+    el.prM.value = '';
+    el.prM.placeholder = S.LABELS.slice(0, state.n).join(' ');
+    el.practiceErr.textContent = '';
+    el.prM.removeAttribute('aria-invalid');
+    el.practiceResult.replaceChildren();
+    el.btnPracticeExit.hidden = true;
+  }
+
+  function gradePractice() {
+    const res = G.practice.parseGuess(el.prM.value, state.n);
+    el.practiceErr.textContent = res.error ? t(res.error) : '';
+    el.prM.setAttribute('aria-invalid', String(!!res.error));
+    if (res.error) { el.practiceResult.replaceChildren(); el.btnPracticeExit.hidden = true; return; }
+    const cells = G.practice.grade(res.guess, state.result.pool);
+    const line = document.createElement('div');
+    line.className = 'practice-result-row';
+    const label = document.createElement('span');
+    label.className = 'practice-result-label';
+    label.textContent = `${t('rowPool')}:`;
+    line.append(label);
+    let ok = 0;
+    cells.forEach((c) => {
+      if (c.ok) ok++;
+      const chip = document.createElement('span');
+      chip.className = `practice-gene ${c.ok ? 'ok' : 'bad'}`;
+      chip.textContent = c.ok ? S.label(c.correct) : `${S.label(c.guess)} → ${S.label(c.correct)}`;
+      line.append(chip);
+    });
+    const summary = document.createElement('p');
+    summary.className = `practice-score${ok === cells.length ? ' all' : ''}`;
+    summary.textContent = ok === cells.length ? t('practiceAllCorrect') : t('practiceResultScore', { ok, total: cells.length });
+    el.practiceResult.replaceChildren(line, summary);
+    el.btnPracticeExit.hidden = false;
+  }
+
+  // ---------- Copias en 1000 repeticiones ----------
+
+  function renderCopies() {
+    el.btnCopies.textContent = t(state.copies ? 'hideCopies' : 'showCopies');
+    el.btnCopies.setAttribute('aria-pressed', String(state.copies));
+    el.copiesCard.hidden = !state.copies;
+    if (!state.copies || state.view !== 'op') return;
+    const d = G.compare.copiesDistribution(state.opId, state.fitness, { variant: state.variant, params: state.params }, COPIES_REPS, 1);
+    const exp = state.result.aux.expected;
+    const head = document.createElement('tr');
+    const th = (txt, cls) => { const c = document.createElement('th'); c.textContent = txt; if (cls) c.className = cls; c.scope = 'col'; return c; };
+    head.append(th(t('copiesColInd')), th(t('copiesColFit'), 'num'), th(t('copiesColExp'), 'num'), th(t('copiesColMean'), 'num'), th(t('copiesColSd'), 'num'));
+    const cols = Array.from({ length: d.maxC + 1 }, (_, c) => c);
+    cols.forEach((c) => head.append(th(c === 1 ? t('copiesColC1') : t('copiesColC', { c }), 'num dist')));
+    const two = (v) => v.toLocaleString(locale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const rows = state.fitness.map((f, i) => {
+      const tr = document.createElement('tr');
+      const td = (txt, cls) => { const c = document.createElement('td'); c.textContent = txt; if (cls) c.className = cls; return c; };
+      const name = document.createElement('th');
+      name.scope = 'row';
+      name.textContent = S.label(i);
+      tr.append(name, td(String(f), 'num'), td(exp ? two(exp[i]) : '—', 'num'), td(two(d.mean[i]), 'num'), td(two(d.sd[i]), 'num'));
+      cols.forEach((c) => {
+        const v = d.dist[i][c];
+        const cell = td(v >= 0.005 ? `${Math.round(v * 100)} %` : '', 'num dist');
+        cell.style.setProperty('--a', String(Math.min(1, v * 1.4)));
+        if (v > 0.45) cell.classList.add('strong');
+        if (exp && (c === Math.floor(exp[i] + 1e-9) || c === Math.ceil(exp[i] - 1e-9))) cell.classList.add('near');
+        tr.append(cell);
+      });
+      return tr;
+    });
+    el.copiesTable.replaceChildren(head, ...rows);
+    el.copiesNote.textContent = t('copiesNote', { spread: two(S.sum(d.sd) / state.n) });
   }
 
   // ---------- Reproductor ----------
@@ -163,13 +314,16 @@
   }
 
   function next() {
+    if (!state.result || state.view !== 'op') return;
     if (state.step < state.result.steps.length - 1) goTo(state.step + 1, true);
     else stop();
   }
-  function prev() { stop(); goTo(state.step - 1, false); }
-  function reset() { stop(); goTo(0, false); }
+  const canPlay = () => !!state.result && state.view === 'op';
+  function prev() { stop(); if (canPlay()) goTo(state.step - 1, false); }
+  function reset() { stop(); if (canPlay()) goTo(0, false); }
 
   function play() {
+    if (!canPlay()) return;
     if (state.step >= state.result.steps.length - 1) goTo(0, false);
     state.playing = true;
     el.btnPlay.classList.add('playing');
@@ -191,6 +345,211 @@
     el.btnPlay.setAttribute('aria-label', t('play'));
   }
   function togglePlay() { if (state.playing) stop(); else play(); }
+
+  // ---------- Comparar mecanismos ----------
+
+  // Colores fijos de cada mecanismo en las gráficas (el color sigue al mecanismo, nunca al orden).
+  const SLOT = {
+    roulette: 1, tournament: 2, 'linear-ranking': 3, truncation: 4, sus: 5, boltzmann: 6, 'exponential-ranking': 7, 'scaled-roulette': 8,
+  };
+  const SIM = { size: 50, gens: 40, runs: 50 };
+  const CMP_REPS = 1000;
+  const PARAM_SYMBOL = { sp: 's', k: 'k', p: 'p', tau: 'τ', temp: 'T', base: 'c', shift: 'C', cm: 'cm', c: 'c' };
+  let cmpToken = 0;
+
+  const cmpView = createCompareView({
+    pop: $('cmpPop'), pools: $('cmpPools'), table: $('cmpTable'), defs: $('cmpDefs'),
+    chips: $('simChips'), distinct: $('simDistinct'), fit: $('simFit'), simTable: $('simTable'),
+  }, {
+    t: (k, p) => t(k, p),
+    format: {
+      two: (v) => v.toLocaleString(locale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      one: (v) => v.toLocaleString(locale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+      pct: (v) => v.toLocaleString(locale(), { style: 'percent', maximumFractionDigits: 0 }),
+    },
+  });
+
+  const readyOps = () => registry.families.flatMap((f) => f.operators)
+    .filter((op) => op.ready && G.operators[op.id] && G.content[op.id]).map((op) => op.id);
+
+  // Ajustes de cada mecanismo en la comparación: los suyos por defecto, salvo el de la página de
+  // la que se viene, que conserva los del usuario.
+  function cmpSettings(id) {
+    const sp = G.operators[id].spec;
+    if (id === state.cmp.from) return { variant: state.cmp.variant, params: state.cmp.params };
+    const params = {};
+    (sp.params || []).forEach((pr) => { params[pr.id] = pr.default; });
+    return { variant: sp.variants ? sp.defaultVariant : null, params };
+  }
+
+  function cmpMeta(id, o) {
+    const sp = G.operators[id].spec;
+    const parts = [];
+    if (o.variant) parts.push(G.content[id].variants[o.variant].name[state.lang]);
+    (sp.params || []).filter((pr) => !pr.variants || pr.variants.indexOf(o.variant) !== -1)
+      .forEach((pr) => parts.push(`${PARAM_SYMBOL[pr.id] || pr.id} = ${fmtValue(o.params[pr.id])}`));
+    return parts.join(' · ');
+  }
+
+  function cmpOpHref(id, o) {
+    const sp = G.operators[id].spec;
+    const q = new URLSearchParams([['op', id], ['lang', state.lang]]);
+    if (o.variant) q.set('v', o.variant);
+    q.set('r', String(state.draw));
+    (sp.params || []).filter((pr) => !pr.variants || pr.variants.indexOf(o.variant) !== -1)
+      .forEach((pr) => q.set(pr.id, String(o.params[pr.id])));
+    if (state.example) q.set('ex', state.example);
+    else q.set('f', state.fitness.join('-'));
+    q.set('s', String(state.seed));
+    return `#${q.toString()}`;
+  }
+
+  const METRICS = [
+    { id: 'best', kind: 'two' },
+    { id: 'intensity', kind: 'two' },
+    { id: 'lost', kind: 'pct', max: 1 },
+    { id: 'spread', kind: 'two' },
+  ];
+
+  function cmpRows() {
+    const c = state.cmp;
+    return readyOps().filter((id) => G.operators[id].spec.proportional ? !G.operators[id].validatePopulation(state.fitness) : true).map((id) => {
+      const o = cmpSettings(id);
+      const res = G.operators[id].spec.run(state.fitness, { variant: o.variant, params: o.params, seed: state.draw });
+      const old = c.rows ? c.rows.find((r) => r.id === id) : null;
+      return {
+        id, o, from: id === c.from, slot: SLOT[id] || null,
+        name: registry.getOperator(id).name[state.lang], short: t(`short_${id}`),
+        meta: cmpMeta(id, o), href: cmpOpHref(id, o),
+        pool: res.pool, distinct: new Set(res.pool).size, labels: S.LABELS,
+        metrics: old && old.fitKey === state.fitness.join('-') ? old.metrics : undefined,
+        sim: old ? old.sim : undefined,
+        fitKey: state.fitness.join('-'),
+      };
+    });
+  }
+
+  function renderCompare() {
+    const c = state.cmp;
+    document.title = t('compareDocTitle');
+    if (c.from) {
+      el.cmpBackText.textContent = t('compareBackTo', { name: registry.getOperator(c.from).name[state.lang] });
+      el.cmpBack.href = cmpOpHref(c.from, cmpSettings(c.from));
+    } else {
+      el.cmpBackText.textContent = t('allOperators');
+      el.cmpBack.href = `#lang=${state.lang}`;
+    }
+    c.rows.forEach((row) => {
+      row.name = registry.getOperator(row.id).name[state.lang];
+      row.short = t(`short_${row.id}`);
+      row.meta = cmpMeta(row.id, row.o);
+      row.href = cmpOpHref(row.id, row.o);
+    });
+    cmpView.renderPopulation(state.fitness, S.LABELS);
+    cmpView.renderPools(c.rows);
+    renderCmpTable();
+    el.simIntro.textContent = t('simIntro', SIM);
+    renderSimPart();
+  }
+
+  function renderCmpTable() {
+    const rows = state.cmp.rows;
+    const metrics = METRICS.map((m) => {
+      if (m.max) return m;
+      const vals = rows.map((r) => (r.metrics ? r.metrics[m.id] : null)).filter((v) => v != null);
+      return Object.assign({}, m, { max: Math.max(1e-9, ...vals) });
+    });
+    cmpView.renderTable(metrics, rows);
+  }
+
+  function renderSimPart() {
+    const c = state.cmp;
+    const chartable = c.rows.filter((r) => r.slot);
+    c.selected = c.selected.filter((id) => chartable.some((r) => r.id === id));
+    cmpView.renderChips(chartable, c.selected, (id) => {
+      const k = c.selected.indexOf(id);
+      if (k !== -1) c.selected.splice(k, 1);
+      else if (c.selected.length < 4) c.selected.push(id);
+      renderSimPart();
+    });
+    const series = c.selected.map((id) => c.rows.find((r) => r.id === id)).filter((r) => r && r.sim);
+    cmpView.renderSim({ size: SIM.size, series });
+    cmpView.renderSimTable(c.rows);
+  }
+
+  // Primero los padres (rápido); las métricas y la simulación, por tandas, sin bloquear la página.
+  function recomputeCompare(keepSim) {
+    const token = ++cmpToken;
+    const c = state.cmp;
+    if (!keepSim && c.rows) c.rows.forEach((r) => { r.sim = undefined; });
+    c.rows = cmpRows();
+    renderCompare();
+    writeHash();
+    const queue = [];
+    c.rows.forEach((row) => { if (row.metrics === undefined) queue.push(['m', row]); });
+    c.rows.forEach((row) => { if (row.sim === undefined) queue.push(['s', row]); });
+    const total = queue.length;
+    const tick = () => {
+      if (token !== cmpToken || state.view !== 'cmp') return;
+      const job = queue.shift();
+      if (!job) { el.cmpProgress.textContent = ''; return; }
+      const [kind, row] = job;
+      if (kind === 'm') {
+        row.metrics = G.compare.metrics(row.id, state.fitness, row.o, CMP_REPS, 1);
+        renderCmpTable();
+      } else {
+        row.sim = G.compare.simulate(row.id, row.o, Object.assign({ seed: c.simSeed }, SIM));
+        renderSimPart();
+      }
+      el.cmpProgress.textContent = queue.length ? t('compareProgress', { p: Math.floor((100 * (total - queue.length)) / total) }) : '';
+      setTimeout(tick, 0);
+    };
+    setTimeout(tick, 30);
+  }
+
+  function showCompare(q) {
+    stop();
+    state.view = 'cmp';
+    const ids = readyOps();
+    const from = ids.indexOf(q.get('from')) !== -1 ? q.get('from') : null;
+    const fromSpec = from ? G.operators[from].spec : null;
+    const variant = fromSpec && fromSpec.variants ? (fromSpec.variants.indexOf(q.get('v')) !== -1 ? q.get('v') : fromSpec.defaultVariant) : null;
+    const params = {};
+    if (fromSpec) {
+      (fromSpec.params || []).forEach((pr) => {
+        const v = q.has(pr.id) && q.get(pr.id) !== '' ? Number(q.get(pr.id)) : NaN;
+        params[pr.id] = Number.isFinite(v) && v >= pr.min && v <= pr.max ? v : pr.default;
+      });
+    }
+    const r = parseInt(q.get('r'), 10);
+    state.draw = Number.isFinite(r) && r > 0 ? r % 1000000 : R.newSeed() + 1;
+    const sim = parseInt(q.get('sim'), 10);
+    state.cmp = {
+      from, variant, params, rows: null,
+      selected: ['roulette', 'linear-ranking', 'tournament'],
+      simSeed: Number.isFinite(sim) && sim > 0 ? sim : 1,
+    };
+    const seed = parseInt(q.get('s'), 10);
+    const s0 = Number.isFinite(seed) ? Math.abs(seed) % 1000000 : R.newSeed();
+    const fitness = (q.get('f') || '').split('-').filter((x) => x !== '').map(Number);
+    if (q.get('ex') === 'goldberg') { state.seed = s0; loadGoldberg(); }
+    else if (fitness.length && !S.validateProportional(fitness)) Object.assign(state, { fitness, n: fitness.length, seed: s0, example: null });
+    else generate(s0, state.n);
+    showOnly('cmp');
+    recomputeCompare();
+    window.scrollTo(0, 0);
+  }
+
+  // Enlace a la comparación con esta población y los ajustes del mecanismo actual.
+  function compareHref() {
+    const q = new URLSearchParams([['cmp', 'all'], ['lang', state.lang], ['from', state.opId]]);
+    if (state.variant) q.set('v', state.variant);
+    activeParams().forEach((pr) => q.set(pr.id, String(state.params[pr.id])));
+    if (state.example) q.set('ex', state.example);
+    else q.set('f', state.fitness.join('-'));
+    q.set('s', String(state.seed));
+    return `#${q.toString()}`;
+  }
 
   // ---------- Cabecera, selector de mecanismos y leyenda ----------
 
@@ -251,8 +610,11 @@
   }
 
   // Controles de los parámetros del mecanismo (s, k, p, τ).
+  // Parámetros que se aplican con la variante actual (algunos solo valen para una variante)
+  const activeParams = () => (spec().params || []).filter((pr) => !pr.variants || pr.variants.indexOf(state.variant) !== -1);
+
   function renderParams() {
-    const ps = spec().params || [];
+    const ps = activeParams();
     el.paramsBox.hidden = !ps.length;
     el.paramsBox.replaceChildren(...ps.map((pr) => {
       const id = `param-${pr.id}`;
@@ -319,6 +681,7 @@
     G.about.renderFooter(el.siteFoot, state.lang);
     $('sisterCrossover').href = G.about.sisterUrl('crossover', state.lang);
     $('sisterMutation').href = G.about.sisterUrl('mutation', state.lang);
+    $('cmpHomeLink').href = `#cmp=all&lang=${state.lang}`;
     if (state.view === 'about') {
       document.title = `${G.about.text[state.lang].title} · ${t('brand')}`;
       G.about.renderAbout(el.aboutBody, state.lang);
@@ -333,6 +696,12 @@
       learn.refresh();
       renderNarration();
       syncControls();
+      el.btnPractice.textContent = t(state.practice ? 'exitPractice' : 'practiceMode');
+      if (state.practice) { renderPracticeGivens(); resetPracticeForm(); }
+      renderCopies();
+      el.btnCompare.href = compareHref();
+    } else if (state.view === 'cmp') {
+      renderCompare();
     }
     writeHash();
   }
@@ -343,6 +712,7 @@
     el.homeView.hidden = which !== 'home';
     el.opView.hidden = which !== 'op';
     el.aboutView.hidden = which !== 'about';
+    el.cmpView.hidden = which !== 'cmp';
   }
 
   function showHome() {
@@ -365,6 +735,12 @@
     state.view = 'op';
     state.opId = id;
     state.errKey = null;
+    state.practice = false;
+    state.copies = q.get('cp') === '1';
+    el.practiceCard.hidden = true;
+    el.playerBox.hidden = false;
+    el.narrationBox.hidden = false;
+    el.btnPractice.setAttribute('aria-pressed', 'false');
     showOnly('op');   // visible antes de dibujar, para medir el ancho disponible
 
     const vs = spec().variants;
@@ -404,6 +780,7 @@
     if (i18n.languages.indexOf(q.get('lang')) !== -1) state.lang = q.get('lang');
     const id = q.get('op');
     if (id && registry.isReady(id) && G.operators[id] && G.content[id]) showOp(id, q);
+    else if (q.get('cmp')) showCompare(q);
     else if (q.get('page') === 'about') showAbout();
     else showHome();
     applyLanguage();
@@ -423,11 +800,27 @@
         s: String(state.seed),
         ex: state.example || undefined,
         step: String(state.step),
+        cp: state.copies ? '1' : undefined,
       });
-      paramIds = (spec().params || []).map((pr) => pr.id);
+      paramIds = activeParams().map((pr) => pr.id);
       paramIds.forEach((k) => { params[k] = String(state.params[k]); });
     }
-    const order = ['page', 'op', 'lang', 'v', 'r'].concat(paramIds, ['f', 's', 'ex', 'step']).filter((k) => params[k] != null && params[k] !== '');
+    if (state.view === 'cmp') {
+      const c = state.cmp;
+      Object.assign(params, {
+        cmp: 'all',
+        from: c.from || undefined,
+        v: c.variant || undefined,
+        r: String(state.draw),
+        f: state.example ? undefined : state.fitness.join('-'),
+        s: String(state.seed),
+        ex: state.example || undefined,
+        sim: c.simSeed > 1 ? String(c.simSeed) : undefined,
+      });
+      paramIds = Object.keys(c.params);
+      paramIds.forEach((k) => { params[k] = String(c.params[k]); });
+    }
+    const order = ['page', 'op', 'cmp', 'lang', 'from', 'v', 'r'].concat(paramIds, ['f', 's', 'ex', 'cp', 'sim', 'step']).filter((k) => params[k] != null && params[k] !== '');
     const h = new URLSearchParams(order.map((k) => [k, params[k]])).toString();
     if (location.hash.replace(/^#/, '') === h) return;
     try { history.replaceState(null, '', `#${h}`); } catch (err) { /* file:// en algunos navegadores */ }
@@ -496,8 +889,25 @@
     el.variantDesc.textContent = G.content[state.opId].variants[state.variant].desc[state.lang];
     learn.setVariant(state.variant);
     renderDrawButton();
+    renderParams();
     recompute(0);
   });
+
+  el.btnPractice.addEventListener('click', () => setPracticeMode(!state.practice));
+  el.btnPracticeExit.addEventListener('click', () => setPracticeMode(false));
+  el.practiceForm.addEventListener('submit', (e) => { e.preventDefault(); gradePractice(); });
+  el.btnCopies.addEventListener('click', () => {
+    state.copies = !state.copies;
+    renderCopies();
+    writeHash();
+    if (state.copies) el.copiesCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+
+  el.cmpRandom.addEventListener('click', () => { generate(R.newSeed(), state.n); recomputeCompare(true); });
+  el.cmpGoldberg.addEventListener('click', () => { loadGoldberg(); recomputeCompare(true); });
+  el.cmpDraw.addEventListener('click', () => { state.draw = R.newSeed() + 1; recomputeCompare(true); });
+  el.simAgain.addEventListener('click', () => { state.cmp.simSeed += 1; recomputeCompare(false); });
+  el.cmpBack.addEventListener('click', () => { stop(); });
 
   el.speed.addEventListener('input', () => {
     state.speed = Number(el.speed.value);
@@ -525,6 +935,7 @@
     const tag = (e.target.tagName || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable) return;
     if (e.altKey || e.ctrlKey || e.metaKey) return;
+    if (state.practice) return;   // el paso queda fijo en la intro mientras se practica
     if (e.key === 'ArrowRight') { e.preventDefault(); stop(); next(); }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
     else if (e.key === ' ' && tag !== 'button' && tag !== 'summary' && tag !== 'a') { e.preventDefault(); togglePlay(); }

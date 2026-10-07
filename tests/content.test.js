@@ -42,6 +42,26 @@ const CALLS = {
     js: 'f(c.fitness, c.params.k, c.params.p, fixed(c.draws), c.v === "with")',
     py: 'f(c["fitness"], c["params"]["k"], c["params"]["p"], Fixed(c["draws"]), c["v"] == "with")',
   },
+  offset: {
+    params: (t) => ({ shift: [0, 100, 1000, 2000][t % 4] }),
+    js: 'f(c.fitness, c.params.shift, fixed(c.draws))',
+    py: 'f(c["fitness"], c["params"]["shift"], Fixed(c["draws"]))',
+  },
+  'scaled-roulette': {
+    params: (t) => ({ cm: [1.2, 1.5, 2, 3][t % 4], c: [1, 1.5, 2, 3][t % 4] }),
+    js: 'f(c.fitness, c.v, c.params.cm, c.params.c, fixed(c.draws))',
+    py: 'f(c["fitness"], c["v"], c["params"]["cm"], c["params"]["c"], Fixed(c["draws"]))',
+  },
+  boltzmann: {
+    params: (t) => ({ temp: [1, 3, 10, 25, 50][t % 5] }),
+    js: 'f(c.fitness, c.params.temp, fixed(c.draws), c.v)',
+    py: 'f(c["fitness"], c["params"]["temp"], Fixed(c["draws"]), c["v"])',
+  },
+  'exponential-ranking': {
+    params: (t) => ({ base: [0.5, 0.6, 0.75, 0.8, 0.9, 0.95][t % 6] }),
+    js: 'f(c.fitness, c.params.base, fixed(c.draws), c.v)',
+    py: 'f(c["fitness"], c["params"]["base"], Fixed(c["draws"]), c["v"])',
+  },
   truncation: {
     params: (t) => ({ tau: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1][t % 10] }),
     js: 'f(c.fitness, c.params.tau, fixed(c.draws), c.v === "cyclic")',
