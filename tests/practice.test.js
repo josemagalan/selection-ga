@@ -40,6 +40,17 @@ test('los datos sorteados de la práctica determinan los padres', () => {
           const place = x.params.r == null ? 0 : S.firstAbove(placeCumulative(k, params.p), x.params.r);
           return ranked[place].idx;
         });
+      } else if (id === 'axelrod') {
+        // A mano: la lista de hijos de la regla y, en cada ajuste, el puesto que se quita o se duplica
+        const A = require('../js/operators/axelrod.js');
+        const list = A.expand(A.axelrodKids(f).kids);
+        g.global.forEach((x, k) => {
+          assert.equal(x.params.k, k + 1);
+          assert.equal(x.params.m, list.length);
+          if (x.key === 'pgAxRemove') list.splice(x.params.pos - 1, 1);
+          else list.splice(x.params.pos - 1, 0, list[x.params.pos - 1]);
+        });
+        rebuilt = list;
       } else if (id === 'truncation') {
         rebuilt = CMP.SAMPLERS[id](f, { variant, params }, () => { throw new Error('no debería sortear'); });
       } else {

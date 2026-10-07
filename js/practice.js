@@ -15,6 +15,7 @@
    *   pointers    el único r de SUS (los punteros son r, r + 1, …)
    *   tour        los contendientes de cada torneo (y su r, si es estocástico)
    *   pick        truncamiento al azar: qué puesto de entre los T mejores ha salido
+   *   remove/add  Axelrod: qué hijo de la lista se elimina o se duplica en cada ajuste
    */
   function givens(result) {
     const out = { global: [], slots: [] };
@@ -24,6 +25,8 @@
       else if (st.type === 'pointers') out.global.push({ key: 'pgPointers', params: { r: p.r } });
       else if (st.type === 'tour') out.slots.push({ k: p.t, key: 'pgTour', params: { list: p.list } });
       else if (st.type === 'tourStoch') out.slots.push({ k: p.t, key: 'pgTourStoch', params: { list: p.list, r: p.r } });
+      else if (st.type === 'remove') out.global.push({ key: 'pgAxRemove', params: { k: p.k, pos: p.pos, m: p.m } });
+      else if (st.type === 'add') out.global.push({ key: 'pgAxAdd', params: { k: p.k, pos: p.pos, m: p.m } });
       else if (st.type === 'pick' && st.text.key === 'pick' && p.place != null && p.ptr == null) {
         out.slots.push({ k: p.k, key: 'pgPlace', params: { place: p.place } });
       }

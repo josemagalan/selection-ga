@@ -18,6 +18,7 @@
     'linear-ranking': require('./operators/linear-ranking.js'),
     tournament: require('./operators/tournament.js'),
     truncation: require('./operators/truncation.js'),
+    axelrod: require('./operators/axelrod.js'),
   } : root.GAX.operators;
 
   // Ruleta (N giros) o SUS (un giro, N punteros) sobre las acumuladas accSorted, en el orden `order`
@@ -107,6 +108,18 @@
       const pool = [];
       for (let k = 0; k < n; k++) pool.push(o.variant === 'cyclic' ? top[k % cut] : top[Math.floor(next() * cut)]);
       return pool;
+    },
+    axelrod: (f, o, next) => {
+      // 0, 1 o 2 hijos según z = (f − f̄)/σ y ajuste al azar a N (Galán e Izquierdo, 2005)
+      const n = f.length;
+      const list = ops.axelrod.expand(ops.axelrod.axelrodKids(f).kids);
+      const removing = list.length > n;
+      while (list.length !== n) {
+        const j = Math.floor(next() * list.length);
+        if (removing) list.splice(j, 1);
+        else list.splice(j, 0, list[j]);
+      }
+      return list;
     },
   };
 

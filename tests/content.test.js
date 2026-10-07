@@ -86,6 +86,10 @@ const CALLS = {
     js: 'f(c.fitness, c.offspring, c.ages, c.v, fixed(c.draws))',
     py: 'f(c["fitness"], c["offspring"], c["ages"], c["v"], Fixed(c["draws"]))',
   },
+  axelrod: {
+    js: 'f(c.fitness, fixed(c.draws))',
+    py: 'f(c["fitness"], Fixed(c["draws"]))',
+  },
   truncation: {
     params: (t) => ({ tau: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1][t % 10] }),
     js: 'f(c.fitness, c.params.tau, fixed(c.draws), c.v === "cyclic")',

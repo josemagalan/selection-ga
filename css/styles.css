@@ -1134,3 +1134,15 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .sw-off { background: var(--p2); }
 .pchip.off.new rect { fill: var(--mut); }
 .pchip.off.new .p-label { fill: var(--mut-ink); }
+
+/* Axelrod: umbrales f̄ + σ (2 hijos) y f̄ − σ (ninguno) sobre las barras */
+.sigma-line line { stroke-width: 2; stroke-dasharray: 7 4; pointer-events: none; }
+.sigma-line.plus line, .sigma-line.mean line { stroke: var(--wide); }
+.sigma-line.minus line { stroke: var(--conflict); }
+.sigma-line text { font-size: 13px; font-weight: 700; paint-order: stroke; stroke: var(--card); stroke-width: 4px; stroke-linejoin: round; font-variant-numeric: tabular-nums; }
+.sigma-line.plus text, .sigma-line.mean text { fill: color-mix(in srgb, var(--wide) 72%, var(--ink)); }
+.sigma-line.minus text { fill: color-mix(in srgb, var(--conflict) 80%, var(--ink)); }
+svg.compact .sigma-line text { font-size: 11px; }
+.sw-sigma { width: 22px; height: 12px; border-radius: 0; background:
+  linear-gradient(var(--wide), var(--wide)) 0 2px / 100% 2px no-repeat,
+  linear-gradient(var(--conflict), var(--conflict)) 0 8px / 100% 2px no-repeat; }

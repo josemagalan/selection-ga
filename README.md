@@ -30,6 +30,7 @@ It completes a series with [Crossover in genetic algorithms](https://github.com/
 | Fitness-proportionate | Roulette wheel, stochastic universal sampling (SUS), roulette wheel with fitness scaling (linear scaling, cm; sigma truncation, c) and Boltzmann selection (temperature T; roulette or SUS sampling), plus a counterexample showing why the roulette wheel loses its pressure when a constant is added to fitness |
 | Rank-based | Linear ranking (selection pressure s), exponential ranking (base c), both with roulette or SUS sampling, and truncation selection (proportion τ; at random or in turns) |
 | Tournament | Tournament selection (size k, with or without replacement; stochastic with probability p) |
+| Non-standard proposals | Axelrod’s selection (1986), from social simulation: 2 offspring if f ≥ f̄ + σ, none if f ≤ f̄ − σ, 1 otherwise; the population size is restored at random and the σ = 0 case is handled as in Galán and Izquierdo (2005), the paper that showed how much this choice of selection changes the results of Axelrod’s norms model |
 | Replacement (survivors) | Generational replacement with elitism (elite size e), steady state (replace the worst, the oldest or a random member), (μ + λ) and (μ, λ) selection (number of offspring λ) |
 
 ## Features
@@ -47,7 +48,7 @@ It completes a series with [Crossover in genetic algorithms](https://github.com/
 
 ## Pedagogical purpose
 
-The tool is designed for undergraduate courses on metaheuristics, evolutionary computation and industrial engineering. It can be projected in lectures to walk through each mechanism, used by students on their own to check hand-worked exercises, or used in seminars to discuss selection pressure, the scaling problems of fitness-proportionate selection, why rank-based and tournament selection avoid them, and the trade-off between elitism and diversity in replacement. The Moodle banks turn the same exercises into assessed questions.
+The tool is designed for undergraduate courses on metaheuristics, evolutionary computation and industrial engineering. It can be projected in lectures to walk through each mechanism, used by students on their own to check hand-worked exercises, or used in seminars to discuss selection pressure, the scaling problems of fitness-proportionate selection, why rank-based and tournament selection avoid them, and the trade-off between elitism and diversity in replacement, and, with Axelrod’s rule, why a selection mechanism has to be specified completely. The Moodle banks turn the same exercises into assessed questions.
 
 ## Running locally
 
@@ -63,7 +64,7 @@ Requires Node.js 22 or later; Python 3 is optional (it is used to test the downl
 npm test
 ```
 
-The tests check every mechanism (worked examples, thousands of random cases contrasted with an independent implementation in exact integer arithmetic, statistical properties such as the frequencies of the roulette wheel and the binary tournament, and SUS’s zero bias and minimum spread, the invariances of scaling and Boltzmann selection; for replacement, that (μ + λ) never loses the best, that (μ, λ) keeps only offspring and that elitism keeps the e best parents), that the Moodle questions have a unique answer with a margin against rounding and valid XML, that the fast samplers used for the comparison choose exactly the same parents as the animated mechanisms, that the practice mode gives enough data for a unique answer, that the downloadable code chooses the same parents as the tool with the same random numbers, and that the pseudocode and the narration cover every animation step. They run on every push with GitHub Actions.
+The tests check every mechanism (worked examples, thousands of random cases contrasted with an independent implementation in exact integer arithmetic, statistical properties such as the frequencies of the roulette wheel and the binary tournament, and SUS’s zero bias and minimum spread, the invariances of scaling and Boltzmann selection, Axelrod’s offspring rule against an exact integer version and its expected copies; for replacement, that (μ + λ) never loses the best, that (μ, λ) keeps only offspring and that elitism keeps the e best parents), that the Moodle questions have a unique answer with a margin against rounding and valid XML, that the fast samplers used for the comparison choose exactly the same parents as the animated mechanisms, that the practice mode gives enough data for a unique answer, that the downloadable code chooses the same parents as the tool with the same random numbers, and that the pseudocode and the narration cover every animation step. They run on every push with GitHub Actions.
 
 ## Project structure
 

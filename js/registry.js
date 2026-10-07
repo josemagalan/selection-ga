@@ -135,6 +135,27 @@
       ],
     },
     {
+      id: 'nonstandard',
+      name: { es: 'Propuestas no estándar', en: 'Non-standard proposals' },
+      desc: {
+        es: 'Reglas de selección que no son de los algoritmos genéticos, sino de modelos de otros campos, como la simulación social. No se usan en los algoritmos genéticos, pero enseñan que los detalles de la selección (y su especificación) pueden cambiar los resultados de un modelo.',
+        en: 'Selection rules that do not come from genetic algorithms but from models in other fields, such as social simulation. They are not used in genetic algorithms, but they show that the details of selection (and how it is specified) can change the results of a model.',
+      },
+      sample: [9, 30, 5, 21, 12],
+      operators: [
+        {
+          id: 'axelrod',
+          ready: true,
+          name: { es: 'Selección de Axelrod (f̄ ± σ)', en: 'Axelrod’s selection (f̄ ± σ)' },
+          summary: { es: '0, 1 o 2 hijos según la distancia a la media en desviaciones típicas.', en: '0, 1 or 2 offspring depending on the distance to the mean in standard deviations.' },
+          subtitle: {
+            es: 'Selección de Axelrod (1986): 2 hijos si f ≥ f̄ + σ, ninguno si f ≤ f̄ − σ y 1 el resto; después se ajusta al azar el tamaño de la población',
+            en: 'Axelrod’s selection (1986): 2 offspring if f ≥ f̄ + σ, none if f ≤ f̄ − σ and 1 for the rest; then the population size is adjusted at random',
+          },
+        },
+      ],
+    },
+    {
       id: 'replacement',
       name: { es: 'Reemplazo (supervivientes)', en: 'Replacement (survivors)' },
       desc: {

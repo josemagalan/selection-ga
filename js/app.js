@@ -89,10 +89,18 @@
     draw: (v) => fmtDraw(v),
     num: (v) => (Number.isInteger(v) ? String(v) : v.toLocaleString(locale(), { minimumFractionDigits: 1, maximumFractionDigits: 2 })),
     w: (v) => fmtCum(v, 3),
+    // Distancia z de Axelrod: dos decimales, salvo que un z que no es exactamente ±1 se viera como
+    // ±1,00 (el umbral): entonces, los decimales necesarios para que no lo parezca (0,997 y no 1,00)
+    z: (v) => {
+      let d = 2;
+      while (d < 6 && Math.abs(Math.abs(roundTo(v, d)) - 1) < 1e-12 && Math.abs(Math.abs(v) - 1) > 1e-9) d++;
+      return fmtFixed(v, d).replace('-', '−');
+    },
   };
 
   const PROB_PARAMS = ['p', 'pBest', 'pWorst', 'lo', 'hi', 'p0', 'pw', 'pw0'];
   const EXP_PARAMS = ['e', 'eBest', 'eWorst', 'elo', 'ehi', 'e0', 'e1'];
+  const Z_PARAMS = ['zb'];
   const W_PARAMS = ['ww'];
   const DRAW_PARAMS = ['r', 'ptr', 'last'];
   const fill = (s, params) => (params ? s.replace(/\{(\w+)\}/g, (m, p) => {
@@ -102,6 +110,7 @@
     if (PROB_PARAMS.indexOf(p) !== -1) return fmt.prob(v);
     if (EXP_PARAMS.indexOf(p) !== -1) return fmt.exp(v);
     if (W_PARAMS.indexOf(p) !== -1) return fmt.w(v);
+    if (Z_PARAMS.indexOf(p) !== -1) return fmt.z(v);
     if (DRAW_PARAMS.indexOf(p) !== -1) return fmtDraw(v);
     return fmtValue(v);
   }) : s);
@@ -575,6 +584,7 @@
     pool: ['sw-pool', 'legendPool'],
     contestant: ['sw-contestant', 'legendContestant'],
     cut: ['sw-cut', 'legendCut'],
+    sigma: ['sw-sigma', 'legendSigma'],
   };
 
   // Enlace a otro mecanismo de la misma familia con la misma población.

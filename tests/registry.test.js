@@ -10,7 +10,7 @@ const path = require('node:path');
 const registry = require('../js/registry.js');
 const i18n = require('../js/i18n.js');
 
-const LEGEND_KEYS = ['individual', 'chosen', 'pointer', 'pool', 'contestant', 'cut', 'parentInd', 'childInd', 'survivor', 'cutSurv'];
+const LEGEND_KEYS = ['individual', 'chosen', 'pointer', 'pool', 'contestant', 'cut', 'parentInd', 'childInd', 'survivor', 'cutSurv', 'sigma'];
 const ops = registry.families.flatMap((fam) => fam.operators.map((op) => Object.assign({ fam }, op)));
 
 test('ids únicos y textos en español e inglés', () => {

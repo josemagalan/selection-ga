@@ -30,6 +30,7 @@
     const gLabels = svg.append('g').attr('class', 'labels');
     const gCut = svg.append('g').attr('class', 'cut-layer');
     const gCols = svg.append('g').attr('class', 'cols');
+    const gSigma = svg.append('g').attr('class', 'sigma-layer');
     const gWheel = svg.append('g').attr('class', 'wheel');
     const gStrip = svg.append('g').attr('class', 'strip');
     const gArena = svg.append('g').attr('class', 'arena');
@@ -43,9 +44,11 @@
       const compact = svgEl.clientWidth > 0 && svgEl.clientWidth < 640;
       const left = compact ? 62 : 140;
       const right = compact ? 8 : 16;
-      const W = compact ? Math.max(360, left + right + n * 46) : W_WIDE;
+      // Hueco a la derecha de las barras para las etiquetas de los umbrales f̄ ± σ (Axelrod)
+      const sigmaRoom = aux.sigma ? (compact ? 86 : 128) : 0;
+      const W = compact ? Math.max(360, left + right + n * 46 + sigmaRoom) : W_WIDE;
       const showPie = hasWheel && !compact;
-      const popRight = showPie ? 650 : W - right;
+      const popRight = (showPie ? 650 : W - right) - sigmaRoom;
       const avail = popRight - left;
       const cell = Math.min(CELL_MAX, avail / n);
       const s = Math.round(cell * 0.78);
@@ -95,6 +98,7 @@
       gPool.selectAll('*').remove();
       gFly.selectAll('*').remove();
       gCut.selectAll('*').remove();
+      gSigma.selectAll('*').remove();
       drawStatic();
       current = null;
     }
@@ -155,7 +159,7 @@
       const g = geo;
       const F = step.bars || problem.fitness;
       const barFmt = step.bars ? fmt[problem.aux.barsKind || 'fit'] : fmt.fit;
-      const maxF = Math.max(step.bars ? 1e-9 : 1, Math.max.apply(null, F));
+      const maxF = barScale(step);
       const pos = Array(g.n);
       step.order.forEach((idx, j) => { pos[idx] = j; });
       const hl = new Set(step.hl || []);
@@ -239,6 +243,46 @@
           .classed('visible', (d) => d.show)
           .text((d) => d.text);
       });
+    }
+
+    // Máximo de la escala de las barras: la mayor aptitud o, si el mecanismo lo pide, un valor
+    // mayor (en Axelrod, f̄ + σ puede quedar por encima de todos y su umbral tiene que verse)
+    function barScale(step) {
+      const F = step.bars || problem.fitness;
+      const top = Math.max(step.bars ? 1e-9 : 1, Math.max.apply(null, F));
+      return !step.bars && problem.aux.barMax != null ? Math.max(top, problem.aux.barMax) : top;
+    }
+
+    // ---------- Umbrales f̄ ± σ (Axelrod) ----------
+
+    function renderSigma(step) {
+      const g = geo;
+      const sg = problem.aux.sigma;
+      let data = [];
+      if (sg && step.lines) {
+        data = sg.flat ? [{ id: 'mean', v: sg.mean, key: 'sigmaMean' }]
+          : [{ id: 'plus', v: sg.plus, key: 'sigmaPlus' }, { id: 'minus', v: sg.minus, key: 'sigmaMinus' }];
+        data = data.filter((d) => d.v >= 0);
+      }
+      const maxF = barScale(step);
+      const y = (v) => g.yBase - (v / maxF) * (g.barH - 18);
+      const xa = g.x0 - 6;
+      const xb = g.x0 + g.n * g.cell + 6;
+      const sel = gSigma.selectAll('g.sigma-line').data(data, (d) => d.id).join((enter) => {
+        const e = enter.append('g').attr('class', (d) => `sigma-line ${d.id}`);
+        e.append('line');
+        e.append('text');
+        return e;
+      });
+      sel.select('line').attr('x1', xa).attr('x2', xb).attr('y1', (d) => y(d.v)).attr('y2', (d) => y(d.v));
+      // Etiqueta a la derecha de las barras, en el hueco que deja layout(); si las dos líneas
+      // quedan muy juntas, se separan las etiquetas para que no se pisen
+      const ys = data.map((d) => y(d.v));
+      const off = data.length === 2 && Math.abs(ys[0] - ys[1]) < 15 ? (15 - Math.abs(ys[0] - ys[1])) / 2 : 0;
+      sel.select('text')
+        .attr('x', xb + 6).attr('y', (d) => y(d.v) + (d.id === 'minus' ? off : -off)).attr('dy', '0.36em')
+        .attr('text-anchor', 'start')
+        .text((d) => label(d.key, { v: fmt.num(Math.round(d.v * 100) / 100) }));
     }
 
     // ---------- Corte del truncamiento ----------
@@ -484,6 +528,7 @@
       const animate = !!(o && o.animate) && !!current;
       renderCols(step, animate);
       renderCut(step);
+      renderSigma(step);
       renderWheel(step, animate);
       renderArena(step);
       renderPool(step, animate);
