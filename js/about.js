@@ -5,8 +5,10 @@
   'use strict';
 
   const REPO = 'https://github.com/josemagalan/selection-ga';
-  // Herramientas hermanas de la serie: cruces y mutación
+  // Herramientas hermanas de la serie: representación, inicialización y evaluación, cruces y mutación
   const SISTERS = {
+    representation: 'https://josemagalan.github.io/representation-ga/',
+    initialization: 'https://josemagalan.github.io/initialization-and-evaluation-ga/',
     crossover: 'https://josemagalan.github.io/crossover-ga/',
     mutation: 'https://josemagalan.github.io/mutation-ga/',
   };
@@ -42,7 +44,9 @@
       citeTitle: 'Cómo citar',
       cite: 'Si quieres citar esta herramienta, ponte en contacto con los autores.',
       sisterTitle: 'Herramientas hermanas',
-      sister: 'Esta herramienta completa una serie con «Cruces en algoritmos genéticos» y «Mutación en algoritmos genéticos», de los mismos autores, que muestran con el mismo enfoque los operadores de variación de cada representación. Juntas cubren los tres operadores de un algoritmo genético: selección, cruce y mutación.',
+      sister: 'Esta herramienta forma parte de la serie «Algoritmos genéticos, paso a paso», de los mismos autores, que recorre con el mismo enfoque las piezas de un algoritmo genético: la representación de las soluciones, la inicialización y la evaluación de la población, y los tres operadores, selección, cruce y mutación.',
+      sisterLinkRepresentation: 'Abrir «Representación en algoritmos genéticos»',
+      sisterLinkInitialization: 'Abrir «Inicialización y evaluación en algoritmos genéticos»',
       sisterLinkCrossover: 'Abrir «Cruces en algoritmos genéticos»',
       sisterLinkMutation: 'Abrir «Mutación en algoritmos genéticos»',
       shinyTitle: 'Antecedente',
@@ -56,6 +60,8 @@
       foot: 'Acerca de',
       footMoodle: 'Preguntas para Moodle',
       footSisters: 'Herramientas hermanas:',
+      footRepresentation: 'representación',
+      footInitialization: 'inicialización y evaluación',
       footCrossover: 'cruces',
       footMutation: 'mutación',
       footLicence: 'Código MIT · Textos CC BY 4.0',
@@ -68,7 +74,9 @@
       citeTitle: 'How to cite',
       cite: 'If you would like to cite this tool, please contact the authors.',
       sisterTitle: 'Sister tools',
-      sister: 'This tool completes a series with “Crossover in genetic algorithms” and “Mutation in genetic algorithms”, by the same authors, which show the variation operators for each representation with the same approach. Together they cover the three operators of a genetic algorithm: selection, crossover and mutation.',
+      sister: 'This tool is part of the series “Genetic algorithms, step by step”, by the same authors, which uses the same approach to go through the parts of a genetic algorithm: how solutions are represented, how the population is initialised and evaluated, and the three operators, selection, crossover and mutation.',
+      sisterLinkRepresentation: 'Open “Representation in genetic algorithms”',
+      sisterLinkInitialization: 'Open “Initialisation and evaluation in genetic algorithms”',
       sisterLinkCrossover: 'Open “Crossover in genetic algorithms”',
       sisterLinkMutation: 'Open “Mutation in genetic algorithms”',
       shinyTitle: 'Background',
@@ -82,6 +90,8 @@
       foot: 'About',
       footMoodle: 'Moodle questions',
       footSisters: 'Sister tools:',
+      footRepresentation: 'representation',
+      footInitialization: 'initialisation and evaluation',
       footCrossover: 'crossover',
       footMutation: 'mutation',
       footLicence: 'Code MIT · Texts CC BY 4.0',
@@ -150,7 +160,7 @@
       logoRow('about-logos'),
       section(T.sisterTitle, (() => {
         const p = node('p', null, `${T.sister} `);
-        [['crossover', T.sisterLinkCrossover], ['mutation', T.sisterLinkMutation]].forEach(([k, txt], i) => {
+        [['representation', T.sisterLinkRepresentation], ['initialization', T.sisterLinkInitialization], ['crossover', T.sisterLinkCrossover], ['mutation', T.sisterLinkMutation]].forEach(([k, txt], i) => {
           const s = node('a', null, txt);
           s.href = sisterUrl(k, lang);
           s.target = '_blank';
@@ -191,9 +201,13 @@
     cross.href = sisterUrl('crossover', lang);
     const mut = node('a', null, T.footMutation);
     mut.href = sisterUrl('mutation', lang);
+    const rep = node('a', null, T.footRepresentation);
+    rep.href = sisterUrl('representation', lang);
+    const ini = node('a', null, T.footInitialization);
+    ini.href = sisterUrl('initialization', lang);
     const moodle = node('a', null, T.footMoodle);
     moodle.href = `#page=moodle&lang=${lang}`;
-    links.append(about, document.createTextNode(' · '), moodle, document.createTextNode(` · ${T.footSisters} `), cross, document.createTextNode(', '), mut,
+    links.append(about, document.createTextNode(' · '), moodle, document.createTextNode(` · ${T.footSisters} `), rep, document.createTextNode(', '), ini, document.createTextNode(', '), cross, document.createTextNode(', '), mut,
       document.createTextNode(' · '), gh, document.createTextNode(` · ${T.footLicence}`));
     info.append(links);
     container.replaceChildren(logoRow('site-foot-logos'), info);

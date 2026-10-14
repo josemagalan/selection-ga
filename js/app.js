@@ -715,6 +715,8 @@
     el.err.textContent = state.errKey ? t(state.errKey) : '';
     if (state.playing) { el.btnPlay.title = t('pause'); el.btnPlay.setAttribute('aria-label', t('pause')); }
     G.about.renderFooter(el.siteFoot, state.lang);
+    $('sisterRepresentation').href = G.about.sisterUrl('representation', state.lang);
+    $('sisterInitialization').href = G.about.sisterUrl('initialization', state.lang);
     $('sisterCrossover').href = G.about.sisterUrl('crossover', state.lang);
     $('sisterMutation').href = G.about.sisterUrl('mutation', state.lang);
     $('cmpHomeLink').href = `#cmp=all&lang=${state.lang}`;
