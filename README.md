@@ -1,6 +1,6 @@
 # Selection in genetic algorithms
 
-Browse the series: [Genetic algorithms, step by step](https://josemagalan.github.io/genetic-algorithms-lab/?lang=en) — teaching tools for selection, crossover, mutation and evolutionary simulations.
+Browse the series: [Genetic algorithms, step by step](https://josemagalan.github.io/genetic-algorithms-lab/?lang=en) — five interactive modules, two simulators and a learning handbook.
 
 [![Live demo](https://img.shields.io/badge/Live_demo-GitHub_Pages-2ea44f?logo=github)](https://josemagalan.github.io/selection-ga/)
 [![Tests](https://github.com/josemagalan/selection-ga/actions/workflows/tests.yml/badge.svg)](https://github.com/josemagalan/selection-ga/actions/workflows/tests.yml)
@@ -9,8 +9,6 @@ Browse the series: [Genetic algorithms, step by step](https://josemagalan.github
 [![D3.js v7 · no build](https://img.shields.io/badge/D3.js_v7-no_build-f9a03c?logo=d3dotjs&logoColor=white)](https://d3js.org/)
 [![Languages: ES | EN](https://img.shields.io/badge/Languages-ES_%7C_EN-blue.svg)](#features)
 [![Purpose: Teaching tool](https://img.shields.io/badge/Purpose-Teaching_tool-informational.svg)](#pedagogical-purpose)
-[![Sister tool: crossover-ga](https://img.shields.io/badge/Sister_tool-crossover--ga-8a2be2?logo=github)](https://github.com/josemagalan/crossover-ga)
-[![Sister tool: mutation-ga](https://img.shields.io/badge/Sister_tool-mutation--ga-8a2be2?logo=github)](https://github.com/josemagalan/mutation-ga)
 
 **José Manuel Galán**¹ · **Silvia Díaz-de la Fuente**² · **Virginia Ahedo**¹ · **María Pereda**³ · **José Ignacio Santos**¹
 
@@ -23,7 +21,7 @@ All authors are members of the Los Goonies research group (Group of Organization
 
 Selection decides which individuals of the population become the parents of the next generation. It has to favour the fittest without shutting the door on the rest: if it squeezes too hard, the population loses diversity and stagnates; if it squeezes too little, the search moves blindly. This interactive tool shows, step by step and in Spanish or English, how the classic selection mechanisms of genetic algorithms choose the parents from a population, and what each one does with the fittest and with the rest. It also shows replacement (survivor selection), the second selection of an evolutionary algorithm: which parents and offspring make it into the next generation.
 
-It completes a series with [Crossover in genetic algorithms](https://github.com/josemagalan/crossover-ga) and [Mutation in genetic algorithms](https://github.com/josemagalan/mutation-ga), with the same approach and interface. Some of its ideas come from [SelectionMechanisms](https://github.com/josemagalan/SelectionMechanisms), a Shiny app by the same authors. It runs entirely in the browser, with no build step and no server: open `index.html` or use the [live demo](https://josemagalan.github.io/selection-ga/).
+This tool is part of the five-module series on representation, initialisation and evaluation, selection, crossover and mutation, with a shared approach and interface. Some of its ideas come from [SelectionMechanisms](https://github.com/josemagalan/SelectionMechanisms), a Shiny app by the same authors. It runs entirely in the browser, with no build step and no server: open `index.html` or use the [live demo](https://josemagalan.github.io/selection-ga/).
 
 ## Implemented mechanisms
 
@@ -85,7 +83,25 @@ The tests check every mechanism (worked examples, thousands of random cases cont
 | `img/logos/`, `vendor/` | Institution logos; D3.js v7 |
 | `tests/` | Tests with `node:test` |
 
-## Related tools
+<!-- ga-series-links:start -->
+## Teaching resources / Materiales docentes
+
+[Portal en español](https://josemagalan.github.io/genetic-algorithms-lab/?lang=es) · [Portal in English](https://josemagalan.github.io/genetic-algorithms-lab/?lang=en)
+
+| Resource / Recurso | Use or read / Usar o leer | Repository / Repositorio |
+| --- | --- | --- |
+| Portal / Índice de materiales | [Open / Abrir](https://josemagalan.github.io/genetic-algorithms-lab/) | [GitHub](https://github.com/josemagalan/genetic-algorithms-lab) |
+| Representation / Representación | [Open / Abrir](https://josemagalan.github.io/representation-ga/) | [GitHub](https://github.com/josemagalan/representation-ga) |
+| Initialisation and evaluation / Inicialización y evaluación | [Open / Abrir](https://josemagalan.github.io/initialization-and-evaluation-ga/) | [GitHub](https://github.com/josemagalan/initialization-and-evaluation-ga) |
+| Selection / Selección | [Open / Abrir](https://josemagalan.github.io/selection-ga/) | [GitHub](https://github.com/josemagalan/selection-ga) |
+| Crossover / Cruce | [Open / Abrir](https://josemagalan.github.io/crossover-ga/) | [GitHub](https://github.com/josemagalan/crossover-ga) |
+| Mutation / Mutación | [Open / Abrir](https://josemagalan.github.io/mutation-ga/) | [GitHub](https://github.com/josemagalan/mutation-ga) |
+| EvoTraveller | [Open / Abrir](https://evotraveller.streamlit.app/) | [GitHub](https://github.com/jismartin/evotraveller) |
+| SelectionMechanisms | [Open / Abrir](https://josemagalan.shinyapps.io/SelectionMechanisms/) | [GitHub](https://github.com/josemagalan/SelectionMechanisms) |
+| Learning handbook / Manual de aprendizaje | [Read / Leer](https://josemagalan.github.io/genetic-algorithms-lab-book/) | [GitHub](https://github.com/josemagalan/genetic-algorithms-lab-book) |
+
+El manual está en construcción: su contenido y estructura pueden cambiar. / The handbook is a work in progress: its content and structure may change.
+<!-- ga-series-links:end -->
 
 - [Crossover in genetic algorithms](https://github.com/josemagalan/crossover-ga) ([live demo](https://josemagalan.github.io/crossover-ga/)) and [Mutation in genetic algorithms](https://github.com/josemagalan/mutation-ga) ([live demo](https://josemagalan.github.io/mutation-ga/)): the companion tools on the variation operators, by the same authors and with the same interface. Together, the three tools cover the operators of a genetic algorithm.
 - [SelectionMechanisms](https://github.com/josemagalan/SelectionMechanisms) ([live app](https://josemagalan.shinyapps.io/SelectionMechanisms/)): Shiny app to simulate many generations of selection and compare convergence and loss of diversity.
