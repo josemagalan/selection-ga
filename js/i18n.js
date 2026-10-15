@@ -7,7 +7,7 @@
 
   const dict = {
     es: {
-      portalHome: 'Herramientas de algoritmos genéticos',
+      portalHome: 'Laboratorio de algoritmos genéticos',
       brand: 'Selección en algoritmos genéticos',
       homeTitleDoc: 'Mecanismos de selección · Algoritmos genéticos',
       opTitleDoc: '{name} · Algoritmos genéticos',
@@ -245,7 +245,7 @@
       short_axelrod: 'Axelrod',
     },
     en: {
-      portalHome: 'Genetic algorithm tools',
+      portalHome: 'Genetic Algorithms Lab',
       brand: 'Selection in genetic algorithms',
       homeTitleDoc: 'Selection mechanisms · Genetic algorithms',
       opTitleDoc: '{name} · Genetic algorithms',
