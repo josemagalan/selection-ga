@@ -83,10 +83,11 @@ function steadyRef(par, off, variant, ages, draws) {
   let k = 0;
   off.forEach((_, c) => {
     let v = 0;
-    if (variant === 'worst') { for (let j = 1; j < mu; j++) if (all[slot[j]] < all[slot[v]]) v = j; }
+    if (variant === 'worst' || variant === 'worst-better') { for (let j = 1; j < mu; j++) if (all[slot[j]] < all[slot[v]]) v = j; }
     else if (variant === 'oldest') { for (let j = 1; j < mu; j++) if (age[j] > age[v]) v = j; }
     else v = Math.floor(draws[k++] * mu);
     for (let j = 0; j < mu; j++) age[j]++;
+    if (variant === 'worst-better' && !(all[mu + c] > all[slot[v]])) return;
     slot[v] = mu + c;
     age[v] = 0;
   });
@@ -109,6 +110,28 @@ test('estado estacionario: cada hijo sustituye al peor, al más viejo o a uno al
       assert.ok(res.pool.includes(mu + lambda - 1));
       assert.equal(res.draws.length, variant === 'random' ? lambda : 0);
     }
+  }
+});
+
+test('estado estacionario, al peor si es mejor: el hijo solo entra si mejora al peor', () => {
+  // ejemplo del libro: a (25) sustituye a C (5); b (3) no mejora a E (9) y se descarta
+  assert.deepEqual(steadyState([12, 30, 5, 21, 9, 17], { offspring: [25, 3], variant: 'worst-better' }).pool, [0, 1, 6, 3, 4, 5]);
+  const r = rng.mulberry32(16);
+  for (let t = 0; t < 2000; t++) {
+    const mu = 4 + Math.floor(r() * 7);
+    const lambda = 1 + Math.floor(r() * 3);
+    const par = randPop(r, mu);
+    const off = randPop(r, lambda);
+    const all = par.concat(off);
+    const ages = Array.from({ length: mu }, () => 1 + Math.floor(r() * 5));
+    const res = steadyState(par, { offspring: off, variant: 'worst-better', ages });
+    assert.deepEqual(res.pool, steadyRef(par, off, 'worst-better', ages, []));
+    assert.equal(res.pool.length, mu);
+    // ni la mejor ni la peor aptitud empeoran
+    assert.ok(Math.max(...fit(all, res.pool)) >= Math.max(...par));
+    assert.ok(Math.min(...fit(all, res.pool)) >= Math.min(...par));
+    // cada paso sustituye o descarta
+    res.steps.filter((s) => s.type === 'reject').forEach((s) => assert.ok(s.text.params.fc <= s.text.params.fv));
   }
 });
 

@@ -3,7 +3,8 @@
  * entran unos pocos hijos (λ, de 1 a 3), y cada uno sustituye a un miembro de la población:
  *   - al peor (GENITOR): muy elitista, presión alta;
  *   - al más viejo (FIFO): cada individuo vive un número fijo de pasos;
- *   - a uno al azar: sin presión en el reemplazo, el mejor puede perderse.
+ *   - a uno al azar: sin presión en el reemplazo, el mejor puede perderse;
+ *   - al peor si el hijo es mejor (Lozano, Herrera y Cano, 2008): si no lo mejora, el hijo se descarta.
  * Los hijos ya insertados también pueden ser sustituidos por los siguientes.
  */
 (function (root) {
@@ -13,7 +14,7 @@
   const P = isNode ? require('./repl-utils.js') : root.GAX.replUtils;
 
   /**
-   * opts: { variant: 'worst' | 'oldest' | 'random', offspring: [λ aptitudes], ages: [edad de cada
+   * opts: { variant: 'worst' | 'oldest' | 'random' | 'worst-better', offspring: [λ aptitudes], ages: [edad de cada
    * padre], seed | draws: [u por hijo, en [0, 1)] (solo «al azar») }.
    */
   function steadyState(parents, opts) {
@@ -23,7 +24,7 @@
     const mu = parents.length;
     const g = opts.offspring;
     const lambda = g.length;
-    const variant = opts.variant === 'oldest' || opts.variant === 'random' ? opts.variant : 'worst';
+    const variant = ['oldest', 'random', 'worst-better'].indexOf(opts.variant) !== -1 ? opts.variant : 'worst';
     const ages = Array.isArray(opts.ages) && opts.ages.length === mu ? opts.ages.slice() : Array(mu).fill(1);
     const src = S.drawSource(opts);
     const all = parents.concat(g);
@@ -35,7 +36,7 @@
     const rowValues = () => ({ age: indAge.slice() });
 
     T.st.rows = ['age'];
-    T.snap({ type: 'intro', text: { key: 'intro', params: { mu, lambda } }, rowValues: rowValues() });
+    T.snap({ type: 'intro', text: { key: variant === 'worst-better' ? 'introBetter' : 'intro', params: { mu, lambda } }, rowValues: rowValues() });
     T.st.pool = S.range(mu);
     T.snap({ type: 'copy', text: { key: 'copy', params: { mu } }, rowValues: rowValues() });
     const gone = [];
@@ -43,7 +44,7 @@
       const child = mu + k;
       let v;
       let u = null;
-      if (variant === 'worst') {
+      if (variant === 'worst' || variant === 'worst-better') {
         v = 0;
         for (let j = 1; j < mu; j++) if (all[T.st.pool[j]] < all[T.st.pool[v]]) v = j;
       } else if (variant === 'oldest') {
@@ -54,9 +55,22 @@
         v = Math.floor(u * mu);
       }
       const victim = T.st.pool[v];
+      if (variant === 'worst-better' && !(all[child] > all[victim])) {
+        // el hijo no mejora al peor: se descarta y la población no cambia, pero pasa un paso
+        gone.push(child);
+        T.snap({
+          type: 'reject',
+          text: { key: 'rejectWorse', params: { k: k + 1, child: lab[child], fc: all[child], victim: lab[victim], fv: all[victim] } },
+          hl: [child, victim],
+          rowValues: rowValues(),
+        });
+        for (let j = 0; j < mu; j++) age[j]++;
+        T.st.pool.forEach((ind, j) => { indAge[ind] = age[j]; });
+        continue;
+      }
       gone.push(victim);
       T.st.pool[v] = child;
-      const key = variant === 'worst' ? 'replaceWorst' : variant === 'oldest' ? 'replaceOldest' : 'replaceRandom';
+      const key = variant === 'worst' || variant === 'worst-better' ? 'replaceWorst' : variant === 'oldest' ? 'replaceOldest' : 'replaceRandom';
       T.snap({
         type: 'replace',
         text: { key, params: { k: k + 1, child: lab[child], fc: all[child], victim: lab[victim], fv: all[victim], slot: v + 1, age: age[v] } },
@@ -90,7 +104,7 @@
     random: true,
     randomVariants: ['random'],
     replacement: true,
-    variants: ['worst', 'oldest', 'random'],
+    variants: ['worst', 'oldest', 'random', 'worst-better'],
     defaultVariant: 'worst',
     params: [{ id: 'lambda', min: 1, max: 3, step: 1, default: 2 }],
     offspring: (mu, params) => params.lambda,

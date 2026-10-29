@@ -189,6 +189,16 @@
       details: { es: '1(1), 3–52', en: '1(1), 3–52' },
       url: 'https://doi.org/10.1023/A:1015059928466',
     },
+    lozano2008: {
+      id: 'lozano-herrera-cano-2008',
+      type: 'article',
+      authors: 'Lozano, M., Herrera, F., & Cano, J. R.',
+      year: '2008',
+      title: 'Replacement strategies to preserve useful diversity in steady-state genetic algorithms',
+      container: 'Information Sciences',
+      details: { es: '178(23), 4421–4433', en: '178(23), 4421–4433' },
+      url: 'https://doi.org/10.1016/j.ins.2008.07.031',
+    },
     axelrod1986: {
       id: 'axelrod-1986',
       type: 'article',

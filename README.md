@@ -31,7 +31,7 @@ This tool is part of the five-module series on representation, initialisation an
 | Rank-based | Linear ranking (selection pressure s), exponential ranking (base c), both with roulette or SUS sampling, and truncation selection (proportion τ; at random or in turns) |
 | Tournament | Tournament selection (size k, with or without replacement; stochastic with probability p) |
 | Non-standard proposals | Axelrod’s selection (1986), from social simulation: 2 offspring if f ≥ f̄ + σ, none if f ≤ f̄ − σ, 1 otherwise; the population size is restored at random and the σ = 0 case is handled as in Galán and Izquierdo (2005), the paper that showed how much this choice of selection changes the results of Axelrod’s norms model |
-| Replacement (survivors) | Generational replacement with elitism (elite size e), steady state (replace the worst, the oldest or a random member), (μ + λ) and (μ, λ) selection (number of offspring λ) |
+| Replacement (survivors) | Generational replacement with elitism (elite size e), steady state (replace the worst, the oldest or a random member, or the worst only if the child is better), (μ + λ) and (μ, λ) selection (number of offspring λ) |
 
 ## Features
 
