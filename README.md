@@ -100,7 +100,7 @@ The tests check every mechanism (worked examples, thousands of random cases cont
 | SelectionMechanisms | [Open / Abrir](https://josemagalan.shinyapps.io/SelectionMechanisms/) | [GitHub](https://github.com/josemagalan/SelectionMechanisms) |
 | Book / Libro: *Evolución a la vista* | [Read / Leer](https://josemagalan.github.io/genetic-algorithms-lab-book/) | [GitHub](https://github.com/josemagalan/genetic-algorithms-lab-book) |
 
-El libro está en construcción: su contenido y estructura pueden cambiar. / The book, in Spanish, is a work in progress: its content and structure may change.
+El libro está en español. / The book is in Spanish.
 <!-- ga-series-links:end -->
 
 - [Crossover in genetic algorithms](https://github.com/josemagalan/crossover-ga) ([live demo](https://josemagalan.github.io/crossover-ga/)) and [Mutation in genetic algorithms](https://github.com/josemagalan/mutation-ga) ([live demo](https://josemagalan.github.io/mutation-ga/)): the companion tools on the variation operators, by the same authors and with the same interface. Together, the three tools cover the operators of a genetic algorithm.
