@@ -247,7 +247,7 @@
     },
     en: {
       portalHome: 'Genetic Algorithms Lab',
-      bookChapter: 'Book · chapter 5 (Spanish)',
+      bookChapter: 'Book · chapter 5',
       brand: 'Selection in genetic algorithms',
       homeTitleDoc: 'Selection mechanisms · Genetic algorithms',
       opTitleDoc: '{name} · Genetic algorithms',
