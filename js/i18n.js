@@ -9,6 +9,7 @@
     es: {
       portalHome: 'Laboratorio de algoritmos genéticos',
       bookChapter: 'Libro · capítulo 5',
+      controlsTitle: 'Controles',
       brand: 'Selección en algoritmos genéticos',
       homeTitleDoc: 'Mecanismos de selección · Algoritmos genéticos',
       opTitleDoc: '{name} · Algoritmos genéticos',
@@ -248,6 +249,7 @@
     en: {
       portalHome: 'Genetic Algorithms Lab',
       bookChapter: 'Book · chapter 5',
+      controlsTitle: 'Controls',
       brand: 'Selection in genetic algorithms',
       homeTitleDoc: 'Selection mechanisms · Genetic algorithms',
       opTitleDoc: '{name} · Genetic algorithms',
